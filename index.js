@@ -39,6 +39,14 @@ app.use(morgan('tiny'))
 app.use(helmet())
 app.use(express.json())
 
+// Set default endpoint for unknown requests
+app.get('*', (_req, _res, next) => {
+    next(new ErrorAPI(
+        'Requested endpoint does not exist on the API', 
+        HttpStatusCodes.NOT_FOUND
+    ))
+})
+
 // Custom error handler middleware
 app.use(errorHandler)
 
