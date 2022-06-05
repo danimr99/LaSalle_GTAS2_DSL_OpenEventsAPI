@@ -29,6 +29,9 @@ global.connection = mysql.createConnection(database)
 const app = express()
 const port = 3000
 
+// Custom routes
+const userRoutes = require('./routes/user_routes')
+
 // Custom error and handler
 const ErrorAPI = require('./errors/error_api')
 const { errorHandler } = require('./errors/error_handler')
@@ -38,6 +41,9 @@ const HttpStatusCodes = require('./utilities/http_status_codes')
 app.use(morgan('tiny'))
 app.use(helmet())
 app.use(express.json())
+
+// Routes
+app.use('/users', userRoutes)
 
 // Set default endpoint for unknown requests
 app.get('*', (_req, _res, next) => {
