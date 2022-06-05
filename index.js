@@ -29,10 +29,18 @@ global.connection = mysql.createConnection(database)
 const app = express()
 const port = 3000
 
+// Custom error and handler
+const ErrorAPI = require('./errors/error_api')
+const { errorHandler } = require('./errors/error_handler')
+const HttpStatusCodes = require('./utilities/http_status_codes')
+
 // Middlewares
 app.use(morgan('tiny'))
 app.use(helmet())
 app.use(express.json())
+
+// Custom error handler middleware
+app.use(errorHandler)
 
 // Start server
 app.listen(port, () => {
