@@ -7,8 +7,10 @@ const HttpStatusCodes = require('../utilities/http_status_codes')
 
 // Import UserDAO and create an instance
 const UserDAO = require('../dao/user_dao')
-const ErrorAPI = require('../errors/error_api')
 const userDAO = new UserDAO()
+
+// Import custom error 
+const ErrorAPI = require('../errors/error_api')
 
 // Import custom data validators
 const { validateObject, validateEmail, validatePassword, passwordMinLength } = require('../utilities/validator')
