@@ -45,7 +45,7 @@ app.use(express.json())
 
 // Routes
 app.use('/users', userRoutes)
-app.use('/users', eventRoutes)
+app.use('/events', eventRoutes)
 
 // Set default endpoint for unknown requests
 app.get('*', (req, _res, next) => {

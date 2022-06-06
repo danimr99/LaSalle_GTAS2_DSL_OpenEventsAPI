@@ -24,4 +24,8 @@ function validatePassword(password) {
     return password.length >= passwordMinLength
 }
 
-module.exports = { validateObject, validateEmail, validatePassword, passwordMinLength }
+function validateDateTimeString(dateTimeString) {
+    return isNaN(Date.parse(dateTimeString)) ? false : true
+}
+
+module.exports = { validateObject, validateEmail, validatePassword, validateDateTimeString, passwordMinLength }
