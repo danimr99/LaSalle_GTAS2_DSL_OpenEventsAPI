@@ -17,12 +17,13 @@ const { validateObject, validateEmail, validatePassword, passwordMinLength } = r
 const { generateAuthenticationToken, authenticateUser } = require('../utilities/authenticator')
 
 // Import custom encryption handler
-const { checkPassword } = require('../utilities/cypher')
+const { checkPassword, encryptPassword } = require('../utilities/cypher')
 
 
 /*
- * Creates a user
- * Endpoint: @POST "/users"
+ * Creates a user.
+ * HTTP Method: POST
+ * Endpoint: "/users"
 */
 router.post('/', async (req, res, next) => {
     // Get all user data from the request body
@@ -41,12 +42,12 @@ router.post('/', async (req, res, next) => {
     const isPasswordValid = validatePassword(user.password)
 
     let stacktrace = {
-        'receivedData': user
+        'received_data': user
     }
 
     // Handle user not correctly filled error
     if (!isUserFilled) {
-        stacktrace.invalidUserFields = invalidUserFields
+        stacktrace['invalid_user_fields'] = invalidUserFields
 
         next(new ErrorAPI(
             'All user information must be correctly fulfilled',
@@ -57,7 +58,7 @@ router.post('/', async (req, res, next) => {
 
     // Handle invalid email error
     if (!isEmailValid) {
-        stacktrace.invalidEmail = user.email
+        stacktrace['invalid_email'] = user.email
 
         next(new ErrorAPI(
             'User has introduced an invalid email',
@@ -68,9 +69,9 @@ router.post('/', async (req, res, next) => {
 
     // Handle password not meeting requirements error
     if (!isPasswordValid) {
-        stacktrace.minimumPasswordLength = passwordMinLength
-        stacktrace.receivedPassword = user.password
-        stacktrace.receivedPasswordLength = user.password.length
+        stacktrace['minimum_password_length'] = passwordMinLength
+        stacktrace['received_password'] = user.password
+        stacktrace['received_password_length'] = user.password.length
 
         next(new ErrorAPI(
             `Password must be at least ${passwordMinLength} characters long`,
@@ -89,10 +90,10 @@ router.post('/', async (req, res, next) => {
     } catch (error) {
         // Already exists a user with the same email address
         stacktrace.sqlError = {
-            'sqlCode': error.code,
-            'sqlErrorNumber': error.errno,
-            'sqlState': error.sqlState,
-            'sqlMessage': error.sqlMessage
+            'sql_code': error.code,
+            'sql_error_number': error.errno,
+            'sql_state': error.sqlState,
+            'sql_message': error.sqlMessage
         }
 
         next(new ErrorAPI(
@@ -104,8 +105,9 @@ router.post('/', async (req, res, next) => {
 })
 
 /*
- * Authenticates a user
- * Endpoint: @POST "/users/login"
+ * Authenticates a user.
+ * HTTP Method: POST
+ * Endpoint: "/users/login"
 */
 router.post('/login', async (req, res, next) => {
     // Get email and password from request body
@@ -119,14 +121,14 @@ router.post('/login', async (req, res, next) => {
     const areCredentialsFilled = invalidCredentialsFields.length === 0 ? true : false
 
     let stacktrace = {
-        'receivedData': credentials
+        'received_data': credentials
     }
 
     // Handle credentials not correctly filled error
     if (!areCredentialsFilled) {
-        stacktrace.invalidUserFields = invalidCredentialsFields
+        stacktrace['invalid_credentials_fields'] = invalidCredentialsFields
 
-        next(new ErrorAPI(
+        return next(new ErrorAPI(
             'Credentials fields (email address and password) must be correctly fulfilled',
             HttpStatusCodes.BAD_REQUEST,
             stacktrace
@@ -138,7 +140,7 @@ router.post('/login', async (req, res, next) => {
 
     // Check if exists a user matching the email address
     if (query.length < 1) {
-        next(new ErrorAPI(
+        return next(new ErrorAPI(
             'Invalid credentials or user not found',
             HttpStatusCodes.NOT_FOUND,
             stacktrace
@@ -147,7 +149,7 @@ router.post('/login', async (req, res, next) => {
 
     // Ensure there is only one user matching the email address
     if (query.length > 1) {
-        next(new ErrorAPI(
+        return next(new ErrorAPI(
             'An internal server error has occurred',
             HttpStatusCodes.INTERNAL_SERVER_ERROR,
             stacktrace
@@ -173,8 +175,9 @@ router.post('/login', async (req, res, next) => {
 })
 
 /*
- * Gets all users
- * Endpoint: @GET "/users"
+ * Gets all users.
+ * HTTP Method: GET
+ * Endpoint: "/users"
 */
 router.get('/', authenticateUser, async (_req, res, _next) => {
     // Get all users from database
@@ -188,8 +191,10 @@ router.get('/', authenticateUser, async (_req, res, _next) => {
 })
 
 /*
- * Searches users with a name, last name or email matching the value of the query parameter
- * Endpoint: @GET "/users/search?s=text"
+ * Searches users with a name, last name or email matching the value of the query parameter.
+ * HTTP Method: GET
+ * Endpoint: "/users/search?"
+ * Query: s => String
 */
 router.get('/search', authenticateUser, async (req, res, _next) => {
     // Get text to search from URL path sent as query
@@ -200,8 +205,9 @@ router.get('/search', authenticateUser, async (req, res, _next) => {
 })
 
 /*
- * Get user by ID
- * Endpoint: @GET "/users/{id}"
+ * Gets user by ID.
+ * HTTP Method: GET
+ * Endpoint: "/users/{id}"
 */
 router.get('/:id', authenticateUser, async (req, res, next) => {
     // Get user ID from the URL path sent as parameter
@@ -213,7 +219,7 @@ router.get('/:id', authenticateUser, async (req, res, next) => {
     // Check if exists a user matching the ID
     if (user.length !== 1) {
         let stacktrace = {
-            'invalidID': id
+            'invalid_ID': id
         }
 
         return next(new ErrorAPI(
@@ -225,6 +231,57 @@ router.get('/:id', authenticateUser, async (req, res, next) => {
 
     // Send response
     res.status(HttpStatusCodes.OK).json(user)
+})
+
+/*
+ * Gets the user statistics: average score given for events (punctuation), number of comments written for
+ * events, and percentage of users with lower number of comments than this user.
+ * HTTP Method: GET
+ * Endpoint: "/users/{id}/statistics"
+*/
+// TODO Endpoint: @GET "/users/{id}/statistics"
+
+/*
+ * Edits specified fields of the authenticated user.
+ * HTTP Method: PUT
+ * Endpoint: "/users"
+*/
+router.put('/', authenticateUser, async (req, res, _next) => {
+    // Get user ID from the authentication token
+    const { USER_ID } = req
+
+    // Get user matching with the ID
+    let user = await userDAO.getUserByID(USER_ID)
+    user = user[0]
+
+    // Update user depending on the fields received
+    if(req.body.name) user.name = req.body.name
+    if(req.body.last_name) user.last_name = req.body.last_name
+    if(req.body.email) user.email = req.body.email
+    if(req.body.password) user.password = await encryptPassword(req.body.password)
+
+    // Update user on the database
+    await userDAO.updateUser(user)
+
+    // Send response
+    delete user.id
+    res.status(HttpStatusCodes.OK).json(user)
+})
+
+/*
+ * Deletes the authenticated user.
+ * HTTP Method: DELETE
+ * Endpoint: "/users"
+*/
+router.delete('/', authenticateUser, async (req, res, next) => {
+    // Get user ID from the authentication token
+    const { USER_ID } = req
+
+    // Get user matching with the ID
+    await userDAO.deleteUserByID(USER_ID)
+
+    // Send response
+    res.status(HttpStatusCodes.OK).send('User deleted successfully')
 })
 
 module.exports = router

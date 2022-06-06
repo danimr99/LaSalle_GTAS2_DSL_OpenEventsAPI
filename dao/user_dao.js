@@ -10,7 +10,7 @@ class UserDAO extends GenericDAO {
 
     async registerUser(user) {
         // Encrypt user password
-        const encryptedPassword = encryptPassword(user.password)
+        const encryptedPassword = await encryptPassword(user.password)
 
         // Insert user into database
         const [results] = await global.connection.promise().query(
@@ -47,6 +47,26 @@ class UserDAO extends GenericDAO {
             'SELECT * FROM ?? WHERE name LIKE CONCAT(\'%\', ?, \'%\') ' + 
             'OR last_name LIKE CONCAT(\'%\', ?, \'%\') OR email LIKE CONCAT(\'%\', ?, \'%\')',
             [this.table, search, search, search]
+        )
+
+        return results
+    }
+
+    async updateUser(user) {
+        // Update user matching id
+        const [results] = await global.connection.promise().query(
+            'UPDATE ?? SET name = ?, last_name = ?, email = ?, password = ?, image = ? WHERE id = ?',
+            [this.table, user.name, user.last_name, user.email, user.password, user.image, user.id]
+        )
+
+        return results
+    }
+
+    async deleteUserByID(id) {
+        // Delete user matching id
+        const [results] = await global.connection.promise().query(
+            'DELETE FROM ?? WHERE id = ?',
+            [this.table, id]
         )
 
         return results

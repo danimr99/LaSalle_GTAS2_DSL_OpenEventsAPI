@@ -46,10 +46,16 @@ app.use(express.json())
 app.use('/users', userRoutes)
 
 // Set default endpoint for unknown requests
-app.get('*', (_req, _res, next) => {
+app.get('*', (req, _res, next) => {
+    const stacktrace = {
+        'http_method': req.method,
+        'url': req.originalUrl
+    }
+
     next(new ErrorAPI(
         'Requested endpoint does not exist on the API', 
-        HttpStatusCodes.NOT_FOUND
+        HttpStatusCodes.NOT_FOUND,
+        stacktrace
     ))
 })
 

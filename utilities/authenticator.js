@@ -3,10 +3,11 @@ const httpStatusCodes = require('./http_status_codes')
 
 // Import library to handle JsonWebTokens
 const jwt = require('jsonwebtoken')
+const UserDAO = require('../dao/user_dao')
 
 // Set error to throw for unauthenticated users
 const authenticationError = new ErrorAPI(
-    'No authentication token found or not registered user',
+    'Invalid authentication token or not registered user',
     httpStatusCodes.UNAUTHORIZED
 )
 
@@ -14,7 +15,7 @@ function generateAuthenticationToken(user) {
     return jwt.sign({ id: user.id, name: user.name, password: user.password }, process.env.JWT_KEY)
 }
 
-function authenticateUser(req, _res, next) {
+async function authenticateUser(req, _res, next) {
     // Check if exists authentication token on request header
     if(!req.headers.authorization)  return next(authenticationError)
 
@@ -27,10 +28,18 @@ function authenticateUser(req, _res, next) {
     try {
         // Verify token and get payload
         const decoded = jwt.verify(token, process.env.JWT_KEY)
+
+        // Get the user who is the owner of the access token
+        let user = await new UserDAO().getUserByID(decoded.id)
+        user = user[0]
+
+        // Check if exists user matching ID
+        if(!user) return next(authenticationError)
+
         req.USER_ID = decoded.id
         req.USER_EMAIL = decoded.email
 
-        next()
+        return next()
     } catch (error) {
         return next(authenticationError)
     }

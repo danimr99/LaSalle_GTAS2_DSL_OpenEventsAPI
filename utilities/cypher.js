@@ -4,9 +4,9 @@ const bcrypt = require('bcrypt')
 // Password encryption configuration
 const saltRounds = 10
 
-function encryptPassword(password) {
-    const salt = bcrypt.genSaltSync(saltRounds)
-    return bcrypt.hashSync(password, salt)
+async function encryptPassword(password) {
+    const salt = await bcrypt.genSalt(saltRounds)
+    return await bcrypt.hash(password, salt)
 }
 
 async function checkPassword(passwordPlainText, passwordHash) {
