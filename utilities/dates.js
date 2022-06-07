@@ -15,8 +15,8 @@ function toISO(date) {
     return new Date(date).toISOString()
 }
 
-function compareDates(startDate, endDate) {
-    return startDate < endDate
+function compareDates(beforeDate, afterDate) {
+    return beforeDate < afterDate
 }
 
 module.exports = { getCurrentDateTime, toDate, toISO, compareDates }

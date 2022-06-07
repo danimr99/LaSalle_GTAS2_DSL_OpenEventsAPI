@@ -20,6 +20,16 @@ class EventDAO extends GenericDAO {
 
         return results
     }
+
+    async getEventById(id) {
+        // Get event by id
+        const [results] = await global.connection.promise().query(
+            'SELECT * FROM ?? WHERE id = ?',
+            [this.table, id]
+        )
+
+        return results
+    }
 }
 
 module.exports = EventDAO

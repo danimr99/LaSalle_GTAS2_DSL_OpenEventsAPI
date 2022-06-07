@@ -29,13 +29,7 @@ const { checkPassword, encryptPassword } = require('../utilities/cypher')
 */
 router.post('/', async (req, res, next) => {
     // Get all user data from the request body
-    let user = {
-        name: req.body.name,
-        last_name: req.body.last_name,
-        email: req.body.email,
-        password: req.body.password,
-        image: req.body.image
-    }
+    let user = { ...req.body }
 
     // Check if user data meets requirements
     const invalidUserFields = validateObject(user)
@@ -111,10 +105,7 @@ router.post('/', async (req, res, next) => {
 */
 router.post('/login', async (req, res, next) => {
     // Get email and password from request body
-    const credentials = {
-        email: req.body.email,
-        password: req.body.password
-    }
+    const credentials = { ...req.body }
 
     // Check if credentials are correctly filled
     const invalidCredentialsFields = validateObject(credentials)
@@ -163,8 +154,13 @@ router.post('/login', async (req, res, next) => {
 
     // Ensure there is only one user matching the email address
     if (query.length > 1) {
+        stacktrace['error'] = {
+            'reason': `There are ${query.length} users matching the email address and it should be unique`,
+            'email_address': credentials.email 
+        }
+
         return next(new ErrorAPI(
-            'An internal server error has occurred',
+            'An error has occurred while fetching a user by email address from the database',
             HttpStatusCodes.INTERNAL_SERVER_ERROR,
             stacktrace
         ))
@@ -224,7 +220,8 @@ router.get('/', authenticateUser, async (_req, res, next) => {
  * Searches users with a name, last name or email matching the value of the query parameter.
  * HTTP Method: GET
  * Endpoint: "/users/search?"
- * Query: s => Type: String => Text to search on the specified user fields
+ * Query: 
+ *      s => Type: String => Text to search on the specified user fields
 */
 router.get('/search', authenticateUser, async (req, res, next) => {
     // Get text to search from URL path sent as query
@@ -253,6 +250,9 @@ router.get('/search', authenticateUser, async (req, res, next) => {
         ))
     }
 
+    // Remove password hash from each user
+    users.forEach(user => delete user.password)
+
     // Send response
     res.status(HttpStatusCodes.OK).json(users)
 })
@@ -279,7 +279,7 @@ router.get('/:id', authenticateUser, async (req, res, next) => {
     try {
         user = await userDAO.getUserByID(id)
     } catch (error) {
-        // Handle error on get user by id from database
+        // Handle error on get user by ID from database
         stacktrace['sql_error'] = error
 
         return next(new ErrorAPI(
@@ -330,12 +330,12 @@ router.put('/', authenticateUser, async (req, res, next) => {
 
     // Get user matching with the ID
     let user
-    
+
     try {
         user = await userDAO.getUserByID(USER_ID)
         user = user[0]
     } catch (error) {
-        // Handle error on get user by id from database
+        // Handle error on get user by ID from database
         stacktrace['sql_error'] = error
 
         return next(new ErrorAPI(
@@ -343,7 +343,7 @@ router.put('/', authenticateUser, async (req, res, next) => {
             HttpStatusCodes.INTERNAL_SERVER_ERROR,
             stacktrace
         ))
-    }   
+    }
 
     // Update user depending on the fields received
     if (req.body.name) user.name = req.body.name
@@ -360,7 +360,7 @@ router.put('/', authenticateUser, async (req, res, next) => {
     try {
         await userDAO.updateUser(user)
     } catch (error) {
-        // Handle error on update user by id from database
+        // Handle error on update user by ID from database
         stacktrace['sql_error'] = error
 
         return next(new ErrorAPI(
@@ -369,8 +369,6 @@ router.put('/', authenticateUser, async (req, res, next) => {
             stacktrace
         ))
     }
-
-    
 
     // Send response
     delete user.id
