@@ -35,7 +35,13 @@ const { checkPassword, encryptPassword } = require('../utilities/cypher')
 */
 router.post('/', async (req, res, next) => {
     // Get all user data from the request body
-    let user = { ...req.body }
+    let user = { 
+        name: req.body.name,
+        last_name: req.body.last_name,
+        email: req.body.email,
+        password: req.body.password,
+        image: req.body.image
+    }
 
     // Check if user data meets requirements
     const invalidUserFields = validateObject(user)
@@ -88,10 +94,6 @@ router.post('/', async (req, res, next) => {
     try {
         // Register new user to database
         await userDAO.registerUser(user)
-
-        // Send API response
-        delete user.password
-        res.status(HttpStatusCodes.CREATED).send(user)
     } catch (error) {
         // Handle error on create event to database
         stacktrace['sql_error'] = error
@@ -102,6 +104,10 @@ router.post('/', async (req, res, next) => {
             stacktrace
         ))
     }
+
+    // Send API response
+    delete user.password
+    res.status(HttpStatusCodes.CREATED).json(user)
 })
 
 /*
@@ -111,7 +117,10 @@ router.post('/', async (req, res, next) => {
 */
 router.post('/login', async (req, res, next) => {
     // Get email and password from request body
-    const credentials = { ...req.body }
+    const credentials = { 
+        email: req.body.email,
+        password: req.body.password
+    }
 
     // Check if credentials are correctly filled
     const invalidCredentialsFields = validateObject(credentials)

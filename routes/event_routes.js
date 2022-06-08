@@ -33,7 +33,14 @@ router.post('/', authenticateUser, async (req, res, next) => {
 
     // Get event information from request body and set extra data
     const event = {
-        ...req.body,
+        name: req.body.name,
+        image: req.body.image,
+        location: req.body.location,
+        description: req.body.description,
+        eventStart_date: req.body.eventStart_date,
+        eventEnd_date: req.body.eventEnd_date,
+        n_participators: req.body.n_participators,
+        type: req.body.type,
         owner_id: eventOwnerID,
         date: Dates.getCurrentDateTime()
     }
@@ -42,6 +49,7 @@ router.post('/', authenticateUser, async (req, res, next) => {
     const invalidEventFields = validateObject(event)
     const isEventFilled = invalidEventFields.length === 0 ? true : false
 
+    // Set received data to error stacktrace
     let stacktrace = {
         '_original': event
     }
@@ -108,7 +116,7 @@ router.post('/', authenticateUser, async (req, res, next) => {
     }
 
     // Send response
-    res.status(HttpStatusCodes.OK).json(event)
+    res.status(HttpStatusCodes.CREATED).json(event)
 })
 
 /*
@@ -258,10 +266,14 @@ router.put('/:id', authenticateUser, async (req, res, next) => {
     // Get event ID from the URL path sent as parameter
     const { id } = req.params
 
+    // Get user ID from the authentication token
+    const { USER_ID } = req
+
     // Set received data to error stacktrace
     let stacktrace = {
         '_original': {
-            'event_id': id
+            'event_id': id,
+            'user_id': USER_ID
         }
     }
 
@@ -300,6 +312,19 @@ router.put('/:id', authenticateUser, async (req, res, next) => {
         return next(new ErrorAPI(
             'Event does not exist or was not found',
             HttpStatusCodes.NOT_FOUND,
+            stacktrace
+        ))
+    }
+
+    // Check if user ID matches with the owner ID
+    if(USER_ID !== event.owner_id) {
+        stacktrace['error'] = {
+            'owner_id': event.owner_id
+        }
+
+        return next(new ErrorAPI(
+            'An event can only be modified by the owner of itself',
+            HttpStatusCodes.FORBIDDEN,
             stacktrace
         ))
     }
@@ -343,14 +368,18 @@ router.put('/:id', authenticateUser, async (req, res, next) => {
  * HTTP Method: DELETE
  * Endpoint: "/events/{id}"
 */
-router.delete('/:id', authenticateUser, async (req,res, next) => {
+router.delete('/:id', authenticateUser, async (req, res, next) => {
     // Get event ID from the URL path sent as parameter
     const { id } = req.params
+
+    // Get user ID from the authentication token
+    const { USER_ID } = req
 
     // Set received data to error stacktrace
     let stacktrace = {
         '_original': {
-            'event_id': id
+            'event_id': id,
+            'user_id': USER_ID
         }
     }
 
@@ -389,6 +418,19 @@ router.delete('/:id', authenticateUser, async (req,res, next) => {
         return next(new ErrorAPI(
             'Event does not exist or was not found',
             HttpStatusCodes.NOT_FOUND,
+            stacktrace
+        ))
+    }
+
+    // Check if user ID matches with the owner ID
+    if(USER_ID !== event.owner_id) {
+        stacktrace['error'] = {
+            'owner_id': event.owner_id
+        }
+
+        return next(new ErrorAPI(
+            'An event can only be deleted by the owner of itself',
+            HttpStatusCodes.FORBIDDEN,
             stacktrace
         ))
     }

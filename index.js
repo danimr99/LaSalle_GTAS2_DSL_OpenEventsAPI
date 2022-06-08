@@ -32,6 +32,7 @@ const port = 3000
 // Custom routes
 const userRoutes = require('./routes/user_routes')
 const eventRoutes = require('./routes/event_routes')
+const messageRoutes = require('./routes/message_routes')
 
 // Custom error and handler
 const ErrorAPI = require('./errors/error_api')
@@ -46,6 +47,7 @@ app.use(express.json())
 // Routes
 app.use('/users', userRoutes)
 app.use('/events', eventRoutes)
+app.use('/messages', messageRoutes)
 
 // Set default endpoint for unknown requests
 app.get('*', (req, _res, next) => {

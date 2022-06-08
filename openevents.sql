@@ -59,15 +59,15 @@ CREATE TABLE `friends` (
 -- --------------------------------------------------------
 
 --
--- Table: `message`
+-- Table: `messages`
 --
 
-CREATE TABLE `message` (
+CREATE TABLE `messages` (
   `id` int(11) NOT NULL,
   `content` varchar(45) NOT NULL,
   `user_id_send` int(11) NOT NULL,
-  `user_id_recived` int(11) NOT NULL,
-  `timeStamp` datetime NOT NULL
+  `user_id_received` int(11) NOT NULL,
+  `timestamp` datetime NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
@@ -98,9 +98,9 @@ ALTER TABLE `friends`
   ADD PRIMARY KEY (`user_id`,`user_id_friend`);
 
 --
--- Indexes of the table: `message`
+-- Indexes of the table: `messages`
 --
-ALTER TABLE `message`
+ALTER TABLE `messages`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -117,9 +117,9 @@ ALTER TABLE `events`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT of the table: `message`
+-- AUTO_INCREMENT of the table: `messages`
 --
-ALTER TABLE `message`
+ALTER TABLE `messages`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
