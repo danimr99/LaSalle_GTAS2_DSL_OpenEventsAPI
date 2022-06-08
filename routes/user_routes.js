@@ -13,7 +13,13 @@ const userDAO = new UserDAO()
 const ErrorAPI = require('../errors/error_api')
 
 // Import custom data validators
-const { validateObject, validateEmail, validatePassword, passwordMinLength } = require('../utilities/validator')
+const { 
+    validateObject, 
+    validateEmail, 
+    validatePassword, 
+    validateNumber, 
+    passwordMinLength 
+} = require('../utilities/validator')
 
 // Import custom authenticator
 const { generateAuthenticationToken, authenticateUser } = require('../utilities/authenticator')
@@ -195,7 +201,7 @@ router.get('/', authenticateUser, async (_req, res, next) => {
     let users
 
     try {
-        users = await userDAO.getAll()
+        users = await userDAO.getAllUsers()
     } catch (error) {
         // Handle error on get users from database
         let stacktrace = {
@@ -271,6 +277,19 @@ router.get('/:id', authenticateUser, async (req, res, next) => {
         '_original': {
             'user_id': id
         }
+    }
+
+    // Check if user ID is a number
+    if (!validateNumber(id)) {
+        stacktrace['error'] = {
+            'reason': 'User ID is not a number'
+        }
+
+        return next(new ErrorAPI(
+            'Invalid user ID',
+            HttpStatusCodes.BAD_REQUEST,
+            stacktrace
+        ))
     }
 
     // Get user by ID from database
@@ -408,7 +427,9 @@ router.delete('/', authenticateUser, async (req, res, next) => {
     // TODO Delete user on all possible relations/queries (events, friends, messages, assistances...)
 
     // Send response
-    res.status(HttpStatusCodes.OK).send(`User with ID ${USER_ID} was deleted successfully`)
+    res.status(HttpStatusCodes.OK).json({
+        'message': `User with ID ${USER_ID} was deleted successfully`
+    })
 })
 
 module.exports = router

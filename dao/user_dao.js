@@ -1,11 +1,9 @@
-const GenericDAO = require('./generic_dao')
-
 // Import password encryption
 const { encryptPassword } = require('../utilities/cypher')
 
-class UserDAO extends GenericDAO {
+class UserDAO {
     constructor() {
-        super('users')
+        this.table = 'users'
     }
 
     async registerUser(user) {
@@ -28,6 +26,11 @@ class UserDAO extends GenericDAO {
             [this.table, email]
         )
 
+        return results
+    }
+
+    async getAllUsers() {
+        const [results] = await global.connection.promise().query('SELECT * FROM ??', [this.table])
         return results
     }
 

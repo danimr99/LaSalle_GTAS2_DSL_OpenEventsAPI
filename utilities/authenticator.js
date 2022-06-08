@@ -17,7 +17,7 @@ function generateAuthenticationToken(user) {
 
 async function authenticateUser(req, _res, next) {
     // Check if exists authentication token on request header
-    if(!req.headers.authorization)  return next(authenticationError)
+    if(!req.headers.authorization) return next(authenticationError)
 
     // Get Bearer authorization token from request header
     const token = req.headers.authorization.split(' ')[1]

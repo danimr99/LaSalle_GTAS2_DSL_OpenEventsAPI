@@ -28,4 +28,15 @@ function validateDateTimeString(dateTimeString) {
     return isNaN(Date.parse(dateTimeString)) ? false : true
 }
 
-module.exports = { validateObject, validateEmail, validatePassword, validateDateTimeString, passwordMinLength }
+function validateNumber(number) {
+    return !isNaN(number)
+}
+
+module.exports = { 
+    validateObject,
+    validateEmail, 
+    validatePassword, 
+    validateDateTimeString,
+    validateNumber,
+    passwordMinLength 
+}
