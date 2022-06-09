@@ -3,7 +3,7 @@ const express = require('express')
 const router = express.Router()
 
 // Import HTTP status codes
-const HttpStatusCodes = require('../utilities/http_status_codes')
+const HttpStatusCodes = require('../models/http_status_codes')
 
 // Import EventDAO and create an instance
 const MessageDAO = require('../dao/message_dao')
@@ -161,7 +161,7 @@ router.get('/:id', authenticateUser, async (req, res, next) => {
         ))
     }
 
-    // Get messages between both users ID
+    // Get messages exchanged between both users ID
     let messages
 
     try {

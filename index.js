@@ -33,11 +33,12 @@ const port = 3000
 const userRoutes = require('./routes/user_routes')
 const eventRoutes = require('./routes/event_routes')
 const messageRoutes = require('./routes/message_routes')
+const friendRoutes = require('./routes/friend_routes')
 
 // Custom error and handler
 const ErrorAPI = require('./errors/error_api')
 const { errorHandler } = require('./errors/error_handler')
-const HttpStatusCodes = require('./utilities/http_status_codes')
+const HttpStatusCodes = require('./models/http_status_codes')
 
 // Middlewares
 app.use(morgan('tiny'))
@@ -48,6 +49,7 @@ app.use(express.json())
 app.use('/users', userRoutes)
 app.use('/events', eventRoutes)
 app.use('/messages', messageRoutes)
+app.use('/friends', friendRoutes)
 
 // Set default endpoint for unknown requests
 app.get('*', (req, _res, next) => {

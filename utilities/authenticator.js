@@ -1,5 +1,5 @@
 const ErrorAPI = require('../errors/error_api')
-const httpStatusCodes = require('./http_status_codes')
+const httpStatusCodes = require('../models/http_status_codes')
 
 // Import library to handle JsonWebTokens
 const jwt = require('jsonwebtoken')
@@ -11,18 +11,26 @@ const authenticationError = new ErrorAPI(
     httpStatusCodes.UNAUTHORIZED
 )
 
+
+/*
+ * Generates a JsonWebToken for a user.
+ * @param {Object} user - User information to generate the token.
+*/
 function generateAuthenticationToken(user) {
     return jwt.sign({ id: user.id, name: user.name, password: user.password }, process.env.JWT_KEY)
 }
 
+/*
+ * Validates a JsonWebToken received from a HTTP request header.
+*/
 async function authenticateUser(req, _res, next) {
-    // Check if exists authentication token on request header
+    // Check if exists authentication token on HTTP request header
     if(!req.headers.authorization) return next(authenticationError)
 
-    // Get Bearer authorization token from request header
+    // Get Bearer authorization token from HTTP request header
     const token = req.headers.authorization.split(' ')[1]
 
-    // Check if exists a token on the request header
+    // Check if exists a token on the HTTP request header
     if (!token) return next(authenticationError)
 
     try {
@@ -31,7 +39,6 @@ async function authenticateUser(req, _res, next) {
 
         // Get the user who is the owner of the access token
         let user = await new UserDAO().getUserByID(decoded.id)
-        user = user[0]
 
         // Check if exists user matching ID
         if(!user) return next(authenticationError)

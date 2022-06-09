@@ -3,7 +3,7 @@ const express = require('express')
 const router = express.Router()
 
 // Import HTTP status codes
-const HttpStatusCodes = require('../utilities/http_status_codes')
+const HttpStatusCodes = require('../models/http_status_codes')
 
 // Import UserDAO and create an instance
 const UserDAO = require('../dao/user_dao')
@@ -13,12 +13,12 @@ const userDAO = new UserDAO()
 const ErrorAPI = require('../errors/error_api')
 
 // Import custom data validators
-const { 
-    validateObject, 
-    validateEmail, 
-    validatePassword, 
-    validateNumber, 
-    passwordMinLength 
+const {
+    validateObject,
+    validateEmail,
+    validatePassword,
+    validateNumber,
+    passwordMinLength
 } = require('../utilities/validator')
 
 // Import custom authenticator
@@ -35,7 +35,7 @@ const { checkPassword, encryptPassword } = require('../utilities/cypher')
 */
 router.post('/', async (req, res, next) => {
     // Get all user data from the request body
-    let user = { 
+    let user = {
         name: req.body.name,
         last_name: req.body.last_name,
         email: req.body.email,
@@ -58,7 +58,7 @@ router.post('/', async (req, res, next) => {
     if (!isUserFilled) {
         stacktrace['invalid_user_fields'] = invalidUserFields
 
-        next(new ErrorAPI(
+        return next(new ErrorAPI(
             'All user information must be correctly fulfilled',
             HttpStatusCodes.BAD_REQUEST,
             stacktrace
@@ -69,7 +69,7 @@ router.post('/', async (req, res, next) => {
     if (!isEmailValid) {
         stacktrace['invalid_email'] = user.email
 
-        next(new ErrorAPI(
+        return next(new ErrorAPI(
             'User has introduced an invalid email',
             HttpStatusCodes.BAD_REQUEST,
             stacktrace
@@ -84,18 +84,42 @@ router.post('/', async (req, res, next) => {
             'received_password_length': user.password.length
         }
 
-        next(new ErrorAPI(
+        return next(new ErrorAPI(
             `Password must be at least ${passwordMinLength} characters long`,
             HttpStatusCodes.BAD_REQUEST,
             stacktrace
         ))
     }
 
+    // Check if email address already exists
     try {
-        // Register new user to database
+        const userByEmail = await userDAO.getUserByEmail(user.email)
+
+        if (userByEmail) {
+            stacktrace['invalid_email'] = user.email
+
+            return next(new ErrorAPI(
+                'Email address already exists',
+                HttpStatusCodes.BAD_REQUEST,
+                stacktrace
+            ))
+        }
+    } catch (error) {
+        // Handle error on create user to database
+        stacktrace['sql_error'] = error
+
+        return next(new ErrorAPI(
+            'An error has occurred while fetching a user by email from the database',
+            HttpStatusCodes.BAD_REQUEST,
+            stacktrace
+        ))
+    }
+
+    // Register new user to database
+    try {
         await userDAO.registerUser(user)
     } catch (error) {
-        // Handle error on create event to database
+        // Handle error on create user to database
         stacktrace['sql_error'] = error
 
         return next(new ErrorAPI(
@@ -117,7 +141,7 @@ router.post('/', async (req, res, next) => {
 */
 router.post('/login', async (req, res, next) => {
     // Get email and password from request body
-    const credentials = { 
+    const credentials = {
         email: req.body.email,
         password: req.body.password
     }
@@ -143,10 +167,10 @@ router.post('/login', async (req, res, next) => {
     }
 
     // Get user matching email address
-    let query
+    let user
 
     try {
-        query = await userDAO.getUserByEmail(credentials.email)
+        user = await userDAO.getUserByEmail(credentials.email)
     } catch (error) {
         // Handle error on get user by email address from database
         stacktrace['sql_error'] = error
@@ -159,7 +183,7 @@ router.post('/login', async (req, res, next) => {
     }
 
     // Check if exists a user matching the email address
-    if (query.length < 1) {
+    if (!user) {
         return next(new ErrorAPI(
             'Invalid credentials or user not found',
             HttpStatusCodes.NOT_FOUND,
@@ -167,24 +191,7 @@ router.post('/login', async (req, res, next) => {
         ))
     }
 
-    // Ensure there is only one user matching the email address
-    if (query.length > 1) {
-        stacktrace['error'] = {
-            'reason': `There are ${query.length} users matching the email address and it should be unique`,
-            'email_address': credentials.email 
-        }
-
-        return next(new ErrorAPI(
-            'An error has occurred while fetching a user by email address from the database',
-            HttpStatusCodes.INTERNAL_SERVER_ERROR,
-            stacktrace
-        ))
-    }
-
-    // Get the user queried from database
-    const user = query[0]
-
-    // Handle invalid credentials error
+    // Check if password is correct
     if (!await checkPassword(credentials.password, user.password)) {
         return next(new ErrorAPI(
             'Invalid credentials or user not found',
@@ -197,7 +204,6 @@ router.post('/login', async (req, res, next) => {
     res.status(HttpStatusCodes.OK).json({
         'accessToken': generateAuthenticationToken(user)
     })
-
 })
 
 /*
@@ -318,7 +324,7 @@ router.get('/:id', authenticateUser, async (req, res, next) => {
     }
 
     // Check if exists a user matching the ID
-    if (user.length !== 1) {
+    if (!user) {
         stacktrace['invalid_user_id'] = id
 
         return next(new ErrorAPI(
@@ -361,7 +367,6 @@ router.put('/', authenticateUser, async (req, res, next) => {
 
     try {
         user = await userDAO.getUserByID(USER_ID)
-        user = user[0]
     } catch (error) {
         // Handle error on get user by ID from database
         stacktrace['sql_error'] = error
@@ -373,13 +378,22 @@ router.put('/', authenticateUser, async (req, res, next) => {
         ))
     }
 
+    // Check if user exists
+    if (!user) {
+        return next(new ErrorAPI(
+            `User with ID ${USER_ID} does not exist or was not found`,
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+
     // Update user depending on the fields received
     if (req.body.name) user.name = req.body.name
     if (req.body.last_name) user.last_name = req.body.last_name
     if (req.body.email) user.email = req.body.email
     if (req.body.password) user.password = await encryptPassword(req.body.password)
 
-    // Set received data to error stacktrace
+    // Change data of error stacktrace
     stacktrace = {
         '_original': user
     }
@@ -417,6 +431,31 @@ router.delete('/', authenticateUser, async (req, res, next) => {
         '_original': {
             'user_id': USER_ID
         }
+    }
+
+    // Get user matching with the ID
+    let user
+
+    try {
+        user = await userDAO.getUserByID(USER_ID)
+    } catch (error) {
+        // Handle error on get user by ID from database
+        stacktrace['sql_error'] = error
+
+        return next(new ErrorAPI(
+            'An error has occurred while fetching a user by ID from the database',
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+
+    // Check if user exists
+    if (!user) {
+        return next(new ErrorAPI(
+            `User with ID ${USER_ID} does not exist or was not found`,
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
     }
 
     // Delete user matching with the ID

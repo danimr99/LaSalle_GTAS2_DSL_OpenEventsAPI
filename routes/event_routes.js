@@ -3,7 +3,7 @@ const express = require('express')
 const router = express.Router()
 
 // Import HTTP status codes
-const HttpStatusCodes = require('../utilities/http_status_codes')
+const HttpStatusCodes = require('../models/http_status_codes')
 
 // Import EventDAO and create an instance
 const EventDAO = require('../dao/event_dao')
@@ -295,7 +295,6 @@ router.put('/:id', authenticateUser, async (req, res, next) => {
 
     try {
         event = await eventDAO.getEventById(id)
-        event = event[0]
     } catch (error) {
         // Handle error on fetching event by ID from the database
         stacktrace['sql_error'] = error
@@ -317,7 +316,7 @@ router.put('/:id', authenticateUser, async (req, res, next) => {
     }
 
     // Check if user ID matches with the owner ID
-    if(USER_ID !== event.owner_id) {
+    if (USER_ID !== event.owner_id) {
         stacktrace['error'] = {
             'owner_id': event.owner_id
         }
@@ -401,8 +400,7 @@ router.delete('/:id', authenticateUser, async (req, res, next) => {
 
     try {
         event = await eventDAO.getEventById(id)
-        event = event[0]
-    } catch(error) {
+    } catch (error) {
         // Handle error on fetch event by id from database
         stacktrace['sql_error'] = error
 
@@ -423,7 +421,7 @@ router.delete('/:id', authenticateUser, async (req, res, next) => {
     }
 
     // Check if user ID matches with the owner ID
-    if(USER_ID !== event.owner_id) {
+    if (USER_ID !== event.owner_id) {
         stacktrace['error'] = {
             'owner_id': event.owner_id
         }
@@ -439,7 +437,7 @@ router.delete('/:id', authenticateUser, async (req, res, next) => {
     try {
         await eventDAO.deleteEvent(id)
         // TODO Delete all its relations (assistances)
-    } catch(error) {
+    } catch (error) {
         // Handle error on delete event by id from database
         stacktrace['sql_error'] = error
 

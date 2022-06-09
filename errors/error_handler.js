@@ -1,5 +1,8 @@
-const HttpStatusCodes = require('../utilities/http_status_codes')
+const HttpStatusCodes = require('../models/http_status_codes')
 
+/*
+ * Custom error handler.
+*/
 function errorHandler(error, _req, res, _next) {
     // Delete error information if exists
     if(error.sql) delete error.sql
@@ -9,7 +12,6 @@ function errorHandler(error, _req, res, _next) {
     res.status(error.statusCode || HttpStatusCodes.INTERNAL_SERVER_ERROR).send({
         'status': error.statusCode,
         'error': error.message,
-        'details': error.details,
         'stacktrace': error.stacktrace
     })
 }
