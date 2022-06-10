@@ -1,5 +1,5 @@
 // Import custom friend request status and messages
-const [FriendRequestStatus, FriendRequestMessages] = require('../models/friend_request_status')
+const [FriendRequestStatus, FriendRequestMessages] = require('../models/friend_request')
 
 class FriendDAO {
     #table

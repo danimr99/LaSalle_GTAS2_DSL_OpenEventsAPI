@@ -181,4 +181,6 @@ router.get('/:id', authenticateUser, async (req, res, next) => {
     res.status(HttpStatusCodes.OK).json(messages)
 })
 
+// TODO - Add route to delete a specific message
+
 module.exports = router

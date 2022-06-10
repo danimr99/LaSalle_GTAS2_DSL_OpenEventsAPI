@@ -32,6 +32,7 @@ const port = 3000
 // Custom routes
 const userRoutes = require('./routes/user_routes')
 const eventRoutes = require('./routes/event_routes')
+const assistanceRoutes = require('./routes/assistance_routes')
 const messageRoutes = require('./routes/message_routes')
 const friendRoutes = require('./routes/friend_routes')
 
@@ -48,6 +49,7 @@ app.use(express.json())
 // Routes
 app.use('/users', userRoutes)
 app.use('/events', eventRoutes)
+app.use('/assistances', assistanceRoutes)
 app.use('/messages', messageRoutes)
 app.use('/friends', friendRoutes)
 

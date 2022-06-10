@@ -13,14 +13,14 @@ USE openevents;
 -- --------------------------------------------------------
 
 --
--- Table: `assistance`
+-- Table: `assistances`
 --
 
-CREATE TABLE `assistance` (
+CREATE TABLE `assistances` (
   `user_id` int(11) NOT NULL,
   `event_id` int(11) NOT NULL,
-  `puntuation` int(11) DEFAULT NULL,
-  `comentary` varchar(50) DEFAULT NULL
+  `punctuation` int(11) DEFAULT NULL,
+  `comment` varchar(200) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
@@ -31,17 +31,17 @@ CREATE TABLE `assistance` (
 
 CREATE TABLE `events` (
   `id` int(11) NOT NULL,
-  `name` varchar(45) DEFAULT NULL,
+  `name` varchar(50) DEFAULT NULL,
   `owner_id` int(11) DEFAULT NULL,
   `date` datetime DEFAULT NULL,
   `image` varchar(200) DEFAULT NULL,
-  `location` varchar(45) DEFAULT NULL,
+  `location` varchar(100) DEFAULT NULL,
   `description` varchar(500) DEFAULT NULL,
   `eventStart_date` datetime DEFAULT NULL,
   `eventEnd_date` datetime DEFAULT NULL,
   `n_participators` int(11) DEFAULT NULL,
-  `slug` varchar(45) DEFAULT NULL,
-  `type` varchar(45) DEFAULT NULL
+  `slug` varchar(50) DEFAULT NULL,
+  `type` varchar(50) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
@@ -64,7 +64,7 @@ CREATE TABLE `friends` (
 
 CREATE TABLE `messages` (
   `id` int(11) NOT NULL,
-  `content` varchar(45) NOT NULL,
+  `content` varchar(500) NOT NULL,
   `user_id_send` int(11) NOT NULL,
   `user_id_received` int(11) NOT NULL,
   `timestamp` datetime NOT NULL
@@ -78,9 +78,9 @@ CREATE TABLE `messages` (
 
 CREATE TABLE `users` (
   `id` int(11) NOT NULL,
-  `name` varchar(45) DEFAULT NULL,
-  `last_name` varchar(45) DEFAULT NULL,
-  `email` varchar(45) DEFAULT NULL,
+  `name` varchar(50) DEFAULT NULL,
+  `last_name` varchar(50) DEFAULT NULL,
+  `email` varchar(50) DEFAULT NULL,
   `password` varchar(250) DEFAULT NULL,
   `image` varchar(200) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;

@@ -103,6 +103,9 @@ router.post('/', authenticateUser, async (req, res, next) => {
 
     // Create event on the database
     try {
+        //event.eventStart_date = Dates.toDate(event.eventStart_date)
+        //event.eventEnd_date = Dates.toDate(event.eventEnd_date)
+
         await eventDAO.createEvent(event)
     } catch (error) {
         // Handle error on create event to database
