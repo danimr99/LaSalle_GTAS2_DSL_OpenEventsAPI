@@ -10,6 +10,10 @@ const EventDAO = require('../dao/event_dao')
 const eventDAO = new EventDAO()
 
 // Import AssistanceDAO and create an instance
+const UserDAO = require('../dao/user_dao')
+const userDAO = new UserDAO()
+
+// Import AssistanceDAO and create an instance
 const AssistanceDAO = require('../dao/assistance_dao')
 const assistanceDAO = new AssistanceDAO()
 
@@ -216,21 +220,21 @@ router.get('/search', authenticateUser, async (req, res, next) => {
 /*
  * Gets event by ID.
  * HTTP Method: GET
- * Endpoint: "/events/{id}"
+ * Endpoint: "/events/{event_id}"
 */
-router.get('/:id', authenticateUser, async (req, res, next) => {
+router.get('/:eventID', authenticateUser, async (req, res, next) => {
     // Get event ID from the URL path sent as parameter
-    const { id } = req.params
+    const { eventID } = req.params
 
     // Set received data to error stacktrace
     let stacktrace = {
         '_original': {
-            'event_id': id
+            'event_id': eventID
         }
     }
 
     // Check if event ID is a number
-    if (!validateNumber(id)) {
+    if (!validateNumber(eventID)) {
         stacktrace['error'] = {
             'reason': 'Event ID is not a number'
         }
@@ -246,7 +250,7 @@ router.get('/:id', authenticateUser, async (req, res, next) => {
     let event
 
     try {
-        event = await eventDAO.getEventById(id)
+        event = await eventDAO.getEventByID(eventID)
     } catch (error) {
         // Handle error on get event by id from database
         stacktrace['error_sql'] = error
@@ -265,11 +269,11 @@ router.get('/:id', authenticateUser, async (req, res, next) => {
 /*
  * Edits specified fields of the event with matching ID.
  * HTTP Method: PUT
- * Endpoint: "/events/{id}"
+ * Endpoint: "/events/{event_id}"
 */
-router.put('/:id', authenticateUser, async (req, res, next) => {
+router.put('/:eventID', authenticateUser, async (req, res, next) => {
     // Get event ID from the URL path sent as parameter
-    const { id } = req.params
+    const { eventID } = req.params
 
     // Get user ID from the authentication token
     const { USER_ID } = req
@@ -277,13 +281,13 @@ router.put('/:id', authenticateUser, async (req, res, next) => {
     // Set received data to error stacktrace
     let stacktrace = {
         '_original': {
-            'event_id': id,
+            'event_id': eventID,
             'user_id': USER_ID
         }
     }
 
     // Check if event ID is a number
-    if (!validateNumber(id)) {
+    if (!validateNumber(eventID)) {
         stacktrace['error'] = {
             'reason': 'Event ID is not a number'
         }
@@ -299,7 +303,7 @@ router.put('/:id', authenticateUser, async (req, res, next) => {
     let event
 
     try {
-        event = await eventDAO.getEventById(id)
+        event = await eventDAO.getEventByID(eventID)
     } catch (error) {
         // Handle error on fetching event by ID from the database
         stacktrace['sql_error'] = error
@@ -327,7 +331,7 @@ router.put('/:id', authenticateUser, async (req, res, next) => {
         }
 
         return next(new ErrorAPI(
-            'An event can only be modified by the owner of itself',
+            'An event can only be modified by the owner of it',
             HttpStatusCodes.FORBIDDEN,
             stacktrace
         ))
@@ -370,11 +374,11 @@ router.put('/:id', authenticateUser, async (req, res, next) => {
 /*
  * Deletes event with matching ID.
  * HTTP Method: DELETE
- * Endpoint: "/events/{id}"
+ * Endpoint: "/events/{event_id}"
 */
-router.delete('/:id', authenticateUser, async (req, res, next) => {
+router.delete('/:eventID', authenticateUser, async (req, res, next) => {
     // Get event ID from the URL path sent as parameter
-    const { id } = req.params
+    const { eventID } = req.params
 
     // Get user ID from the authentication token
     const { USER_ID } = req
@@ -382,13 +386,13 @@ router.delete('/:id', authenticateUser, async (req, res, next) => {
     // Set received data to error stacktrace
     let stacktrace = {
         '_original': {
-            'event_id': id,
+            'event_id': eventID,
             'user_id': USER_ID
         }
     }
 
     // Check if event ID is a number
-    if (!validateNumber(id)) {
+    if (!validateNumber(eventID)) {
         stacktrace['error'] = {
             'reason': 'Event ID is not a number'
         }
@@ -404,7 +408,7 @@ router.delete('/:id', authenticateUser, async (req, res, next) => {
     let event
 
     try {
-        event = await eventDAO.getEventById(id)
+        event = await eventDAO.getEventByID(eventID)
     } catch (error) {
         // Handle error on fetch event by id from database
         stacktrace['sql_error'] = error
@@ -440,7 +444,7 @@ router.delete('/:id', authenticateUser, async (req, res, next) => {
 
     // Delete event by ID and its assistances from database
     try {
-        await eventDAO.deleteEvent(id)
+        await eventDAO.deleteEvent(eventID)
         // TODO Delete all its relations (assistances)
     } catch (error) {
         // Handle error on delete event by id from database
@@ -455,8 +459,199 @@ router.delete('/:id', authenticateUser, async (req, res, next) => {
 
     // Send response
     res.status(HttpStatusCodes.OK).json({
-        'message': `Event with ID ${id} has been deleted successfully`
+        'message': `Event with ID ${eventID} has been deleted successfully`
     })
+})
+
+/*
+ * Gets all users with their corresponding assistances for an event ID from the database.
+ * HTTP Method: GET
+ * Endpoint: "/events/{event_id}/assistances"
+*/
+router.get('/:eventID/assistances', authenticateUser, async (req, res, next) => {
+    // Get event ID from the URL path sent as parameter
+    const { eventID } = req.params
+
+    // Set received data to error stacktrace
+    let stacktrace = {
+        '_original': {
+            'event_id': eventID
+        }
+    }
+
+    // Check if event ID is a number
+    if (!validateNumber(eventID)) {
+        stacktrace['error'] = {
+            'reason': 'Event ID is not a number'
+        }
+
+        return next(new ErrorAPI(
+            'Invalid event ID',
+            HttpStatusCodes.BAD_REQUEST,
+            stacktrace
+        ))
+    }
+
+    // Get event matching ID if exists
+    let event
+
+    try {
+        event = await eventDAO.getEventByID(eventID)
+    } catch (error) {
+        // Handle error on fetch event by id from database
+        stacktrace['sql_error'] = error
+
+        return next(new ErrorAPI(
+            'An error has occurred while fetching an event by ID from the database',
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+
+    // Check if exists event matching ID
+    if (!event) {
+        return next(new ErrorAPI(
+            'Event does not exist or was not found',
+            HttpStatusCodes.NOT_FOUND,
+            stacktrace
+        ))
+    }
+
+    // Get all assistances for event matching ID
+    let assistances
+
+    try {
+        assistances = await assistanceDAO.getEventAssistances(eventID)
+    } catch (error) {
+        // Handle error on fetch event assistances from database
+        stacktrace['sql_error'] = error
+
+        console.log(error)
+
+        return next(new ErrorAPI(
+            'An error has occurred while fetching event assistances from the database',
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+
+    // Send response
+    res.status(HttpStatusCodes.OK).json(assistances)
+})
+
+/*
+ * Gets the user and the assistance of user with matching ID for an event with matching ID.
+ * HTTP Method: GET
+ * Endpoint: "/events/{event_id}/assistances/{user_id}"
+*/
+router.get('/:eventID/assistances/:userID', authenticateUser, async (req, res, next) => {
+    // Get event ID from the URL path sent as parameter
+    const { eventID, userID } = req.params
+
+    // Set received data to error stacktrace
+    let stacktrace = {
+        '_original': {
+            'event_id': eventID,
+            'user_id': userID
+        }
+    }
+
+    // Check if event ID is a number
+    if (!validateNumber(eventID)) {
+        stacktrace['error'] = {
+            'reason': 'Event ID is not a number'
+        }
+
+        return next(new ErrorAPI(
+            'Invalid event ID',
+            HttpStatusCodes.BAD_REQUEST,
+            stacktrace
+        ))
+    }
+
+    // Check if user ID is a number
+    if (!validateNumber(userID)) {
+        stacktrace['error'] = {
+            'reason': 'User ID is not a number'
+        }
+        
+        return next(new ErrorAPI(
+            'Invalid user ID',
+            HttpStatusCodes.BAD_REQUEST,
+            stacktrace
+        ))
+    }
+
+    // Get event matching ID if exists
+    let event
+
+    try {
+        event = await eventDAO.getEventByID(eventID)
+    } catch (error) {
+        // Handle error on fetch event by id from database
+        stacktrace['sql_error'] = error
+
+        return next(new ErrorAPI(
+            'An error has occurred while fetching an event by ID from the database',
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+
+    // Check if exists event matching ID
+    if (!event) {
+        return next(new ErrorAPI(
+            'Event does not exist or was not found',
+            HttpStatusCodes.NOT_FOUND,
+            stacktrace
+        ))
+    }
+
+    // Get user matching ID if exists
+    let user
+
+    try {
+        user = await userDAO.getUserByID(userID)
+    } catch (error) {
+        // Handle error on fetch user by id from database
+        stacktrace['sql_error'] = error
+
+        return next(new ErrorAPI(
+            'An error has occurred while fetching a user by ID from the database',
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+
+    // Check if exists user matching ID
+    if (!user) {
+        return next(new ErrorAPI(
+            'User does not exist or was not found',
+            HttpStatusCodes.NOT_FOUND,
+            stacktrace
+        ))
+    }
+
+    // Get all assistances for event matching ID
+    let assistance
+
+    try {
+        assistance = await assistanceDAO.getUserEventAssistance(eventID, userID)
+    } catch (error) {
+        // Handle error on fetch event assistances from database
+        stacktrace['sql_error'] = error
+
+        console.log(error)
+
+        return next(new ErrorAPI(
+            'An error has occurred while fetching event assistances from the database',
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+
+    // Send response
+    res.status(HttpStatusCodes.OK).json(assistance)
 })
 
 /*
@@ -496,7 +691,7 @@ router.delete('/:eventID/assistances', authenticateUser, async (req, res, next) 
     let event
 
     try {
-        event = await eventDAO.getEventById(eventID)
+        event = await eventDAO.getEventByID(eventID)
 
         if (!event) {
             return next(new ErrorAPI(

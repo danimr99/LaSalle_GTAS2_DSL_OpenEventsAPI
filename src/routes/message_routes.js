@@ -129,16 +129,16 @@ router.get('/users', authenticateUser, async (req, res, next) => {
 })
 
 /*
- * Gets all messages between the external user with matching id and the authenticated user.
+ * Gets all messages between the external user with matching ID and the authenticated user.
  * HTTP Method: GET
- * Endpoint: "/messages/{id}"
+ * Endpoint: "/messages/{user_id}"
 */
-router.get('/:id', authenticateUser, async (req, res, next) => {
+router.get('/:userID', authenticateUser, async (req, res, next) => {
     // Get user ID from the authentication token
     const { USER_ID } = req
 
     // Get external user ID from the URL path sent as parameter
-    const externalUserID = req.params.id
+    const externalUserID = req.params.userID
 
     // Set received data to error stacktrace
     let stacktrace = {

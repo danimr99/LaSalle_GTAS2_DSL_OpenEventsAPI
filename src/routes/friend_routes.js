@@ -100,16 +100,16 @@ router.get('/', authenticateUser, async (req, res, next) => {
 })
 
 /*
- * Creates friendship request to external user with match id from authenticated user.
+ * Creates a friend request to external user with matching ID from authenticated user.
  * HTTP Method: POST
- * Endpoint: "/friends/{id}"
+ * Endpoint: "/friends/{user_id}"
 */
-router.post('/:id', authenticateUser, async (req, res, next) => {
+router.post('/:userID', authenticateUser, async (req, res, next) => {
     // Get user ID from the authentication token
     const { USER_ID } = req
 
     // Get external user ID from the URL path sent as parameter
-    const externalUserID = req.params.id
+    const externalUserID = req.params.userID
 
     // Set received data to error stacktrace
     let stacktrace = {
@@ -132,6 +132,10 @@ router.post('/:id', authenticateUser, async (req, res, next) => {
         ))
     }
 
+    // TODO Check if exists external user with matching ID
+
+    // TODO Check if authenticated user is not trying to send a friend request to himself/herself
+
     // Create a friend request to the external user
     let result
 
@@ -139,7 +143,7 @@ router.post('/:id', authenticateUser, async (req, res, next) => {
         // Create a friend request
         result = await friendDAO.createFriendRequest(USER_ID, externalUserID)
     } catch (error) {
-        // Handle error on fetch all messages exchanged between both users from database
+        // Handle error on fetch create a friend request to the database
         stacktrace['sql_error'] = error
 
         return next(new ErrorAPI(
@@ -156,14 +160,14 @@ router.post('/:id', authenticateUser, async (req, res, next) => {
 /*
  * Accepts friendship request from external user to authenticated user.
  * HTTP Method: PUT
- * Endpoint: "/friends/{id}"
+ * Endpoint: "/friends/{user_id}"
 */
-router.put('/:id', authenticateUser, async (req, res, next) => {
+router.put('/:userID', authenticateUser, async (req, res, next) => {
     // Get user ID from the authentication token
     const { USER_ID } = req
 
     // Get external user ID from the URL path sent as parameter
-    const externalUserID = req.params.id
+    const externalUserID = req.params.userID
 
     // Set received data to error stacktrace
     let stacktrace = {
@@ -211,14 +215,14 @@ router.put('/:id', authenticateUser, async (req, res, next) => {
  * Rejects a friendship request from external user to authenticated user or deletes a friendship between authenticated
  * user and external user.
  * HTTP Method: PUT
- * Endpoint: "/friends/{id}"
+ * Endpoint: "/friends/{user_id}"
 */
-router.delete('/:id', authenticateUser, async (req, res, next) => {
+router.delete('/:userID', authenticateUser, async (req, res, next) => {
     // Get user ID from the authentication token
     const { USER_ID } = req
 
     // Get external user ID from the URL path sent as parameter
-    const externalUserID = req.params.id
+    const externalUserID = req.params.userID
 
     // Set received data to error stacktrace
     let stacktrace = {

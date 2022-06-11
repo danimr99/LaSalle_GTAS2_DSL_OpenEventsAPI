@@ -42,13 +42,13 @@ class EventDAO {
      * @param {Number} id - The ID of the event to be retrieved.
      * @returns {Promise} - Event
     */
-    async getEventById(id) {
+    async getEventByID(id) {
         const [results] = await global.connection.promise().query(
             'SELECT * FROM ?? WHERE id = ?',
             [this.#table, id]
         )
 
-        return results.length === 1 ? results[0] : null
+        return results
     }
 
     /*

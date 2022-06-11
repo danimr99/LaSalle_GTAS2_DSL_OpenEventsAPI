@@ -41,7 +41,7 @@ class AssistanceDAO {
             [this.#table, userID, eventID]
         )
 
-        return results.length === 1 ? results[0] : null
+        return results
     }
 
     /*
@@ -73,20 +73,38 @@ class AssistanceDAO {
     }
 
     /*
-     * Gets all assistances for an event ID from the database.
+     * Gets all users with their corresponding assistances for an event ID from the database.
      * @param {Number} id - The ID of the event to get the assistances for.
-     * @returns {Promise} - Array of assistances
+     * @returns {Promise} - Array of users with their assistance for the event.
     */
-    // TODO: Use this function to get the assistances of an event
     async getEventAssistances(id) {
-        const foreignTable = 'assistances'
+        const foreignTable = 'users'
 
-        const [results] = global.connection.promise().query(
+        const [results] = await global.connection.promise().query(
             'SELECT u.id, u.name, u.last_name, u.email, a.punctuation, a.comment ' +
-            'FROM ?? AS u INNER JOIN ?? AS a ' +
+            'FROM ?? AS u INNER JOIN ?? AS a ON u.id = a.user_id ' +
             'WHERE u.id IN (SELECT DISTINCT a2.user_id FROM ?? AS a2 ' +
             'WHERE a2.event_id = ?)',
-            [this.#table, foreignTable, foreignTable, id]
+            [foreignTable, this.#table, this.#table, id]
+        )
+
+        return results
+    }
+
+    /*
+     * Gets the user and the assistance of user with matching ID for an event with matching ID.
+     * @param {Number} eventID - The ID of the event to get the assistances for.
+     * @param {Number} userID - The ID of the user to get the assistance for.
+     * @returns {Promise} - User with his/her assistance for the event.
+    */
+    async getUserEventAssistance(eventID, userID) {
+        const foreignTable = 'users'
+
+        const [results] = await global.connection.promise().query(
+            'SELECT a.* FROM ?? AS u INNER JOIN ?? AS a ON u.id = a.user_id ' +
+            'WHERE u.id IN (SELECT DISTINCT a2.user_id FROM ?? AS a2 ' +
+            'WHERE a2.event_id = ? AND a2.user_id = ?)',
+            [foreignTable, this.#table, this.#table, eventID, userID]
         )
 
         return results

@@ -33,7 +33,7 @@ class UserDAO {
             [this.#table, email]
         )
 
-        return results.length === 1 ? results[0] : null
+        return results
     }
 
     /*
@@ -56,7 +56,7 @@ class UserDAO {
             [this.#table, id]
         )
 
-        return results.length === 1 ? results[0] : null
+        return results
     }
 
     /*

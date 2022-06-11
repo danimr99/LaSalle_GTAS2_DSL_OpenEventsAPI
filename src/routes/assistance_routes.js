@@ -77,7 +77,7 @@ router.post('/:eventID', authenticateUser, async (req, res, next) => {
     let event
 
     try {
-        event = await eventDAO.getEventById(eventID)
+        event = await eventDAO.getEventByID(eventID)
 
         if (!event) {
             return next(new ErrorAPI(
@@ -188,7 +188,7 @@ router.get('/:userID/:eventID', authenticateUser, async (req, res, next) => {
     let event
 
     try {
-        event = await eventDAO.getEventById(eventID)
+        event = await eventDAO.getEventByID(eventID)
 
         if (!event) {
             return next(new ErrorAPI(
@@ -264,7 +264,7 @@ router.put('/:eventID', authenticateUser, async (req, res, next) => {
     let event
 
     try {
-        event = await eventDAO.getEventById(eventID)
+        event = await eventDAO.getEventByID(eventID)
 
         if (!event) {
             return next(new ErrorAPI(
@@ -405,7 +405,7 @@ router.delete('/:userID/:eventID', authenticateUser, async (req, res, next) => {
     let event
 
     try {
-        event = await eventDAO.getEventById(eventID)
+        event = await eventDAO.getEventByID(eventID)
 
         if (!event) {
             return next(new ErrorAPI(

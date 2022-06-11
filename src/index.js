@@ -36,7 +36,7 @@ const assistanceRoutes = require('./routes/assistance_routes')
 const messageRoutes = require('./routes/message_routes')
 const friendRoutes = require('./routes/friend_routes')
 
-// Custom error and handler
+// Custom error and error handler
 const ErrorAPI = require('./errors/error_api')
 const { errorHandler } = require('./errors/error_handler')
 

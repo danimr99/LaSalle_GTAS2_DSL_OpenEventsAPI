@@ -13,6 +13,10 @@ const userDAO = new UserDAO()
 const EventDAO = require('../dao/event_dao')
 const eventDAO = new EventDAO()
 
+// Import FriendDAO and create an instance
+const FriendDAO = require('../dao/friend_dao')
+const friendDAO = new FriendDAO()
+
 // Import custom error 
 const ErrorAPI = require('../errors/error_api')
 
@@ -285,21 +289,21 @@ router.get('/search', authenticateUser, async (req, res, next) => {
 /*
  * Gets user by ID.
  * HTTP Method: GET
- * Endpoint: "/users/{id}"
+ * Endpoint: "/users/{user_id}"
 */
-router.get('/:id', authenticateUser, async (req, res, next) => {
+router.get('/:userID', authenticateUser, async (req, res, next) => {
     // Get user ID from the URL path sent as parameter
-    const { id } = req.params
+    const { userID } = req.params
 
     // Set received data to error stacktrace
     let stacktrace = {
         '_original': {
-            'user_id': id
+            'user_id': userID
         }
     }
 
     // Check if user ID is a number
-    if (!validateNumber(id)) {
+    if (!validateNumber(userID)) {
         stacktrace['error'] = {
             'reason': 'User ID is not a number'
         }
@@ -315,7 +319,7 @@ router.get('/:id', authenticateUser, async (req, res, next) => {
     let user
 
     try {
-        user = await userDAO.getUserByID(id)
+        user = await userDAO.getUserByID(userID)
     } catch (error) {
         // Handle error on get user by ID from database
         stacktrace['sql_error'] = error
@@ -329,10 +333,10 @@ router.get('/:id', authenticateUser, async (req, res, next) => {
 
     // Check if exists a user matching the ID
     if (!user) {
-        stacktrace['invalid_user_id'] = id
+        stacktrace['invalid_user_id'] = userID
 
         return next(new ErrorAPI(
-            `User with ID ${id} does not exist or was not found`,
+            `User with ID ${userID} does not exist or was not found`,
             HttpStatusCodes.NOT_FOUND,
             stacktrace
         ))
@@ -346,9 +350,9 @@ router.get('/:id', authenticateUser, async (req, res, next) => {
  * Gets the user statistics: average score given for events (punctuation), number of comments written for
  * events, and percentage of users with lower number of comments than this user.
  * HTTP Method: GET
- * Endpoint: "/users/{id}/statistics"
+ * Endpoint: "/users/{user_id}/statistics"
 */
-// TODO Endpoint: @GET "/users/{id}/statistics"
+// TODO Endpoint: @GET "/users/{user_id}/statistics"
 
 /*
  * Edits specified fields of the authenticated user.
@@ -989,6 +993,79 @@ router.get('/:userID/assistances/finished', authenticateUser, async (req, res, n
 
     // Send response
     res.status(HttpStatusCodes.OK).json(events)
+})
+
+/*
+ * Gets all users who are friends with user with matching ID.
+ * HTTP Method: GET
+ * Endpoint: "/users/{user_id}/friends"
+*/
+router.get('/:userID/friends', authenticateUser, async (req, res, next) => {
+    // Get user ID from the URL path sent as parameter
+    const { userID } = req.params
+
+    // Set received data to error stacktrace
+    let stacktrace = {
+        '_original': {
+            'user_id': userID
+        }
+    }
+
+    // Check if user ID is a number
+    if (!validateNumber(userID)) {
+        stacktrace['invalid_user_id'] = userID
+
+        return next(new ErrorAPI(
+            `User ID ${userID} is not a number`,
+            HttpStatusCodes.BAD_REQUEST,
+            stacktrace
+        ))
+    }
+
+    // Get user matching with the ID
+    let user
+
+    try {
+        user = await userDAO.getUserByID(userID)
+    }
+    catch (error) {
+        // Handle error on get user by ID from database
+        stacktrace['sql_error'] = error
+
+        return next(new ErrorAPI(
+            'An error has occurred while fetching a user by ID from the database',
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+
+    // Check if user exists
+    if (!user) {
+        return next(new ErrorAPI(
+            `User with ID ${userID} does not exist or was not found`,
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+
+    // Get all users who are friends with user with matching ID
+    let friends
+
+    try {
+        friends = await friendDAO.getFriends(userID)
+    } catch (error) {
+        // Handle error on get friends of user by ID from database
+        stacktrace['sql_error'] = error
+
+        return next(new ErrorAPI(
+            'An error has occurred while fetching friends of a user by ID from the database',
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+
+    // Send response
+    res.status(HttpStatusCodes.OK).json(friends)
 })
 
 module.exports = router

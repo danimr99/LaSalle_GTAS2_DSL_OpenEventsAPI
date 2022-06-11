@@ -35,8 +35,8 @@ class FriendDAO {
 
         const [results] = await global.connection.promise().query(
             'SELECT * FROM ?? AS u ' +
-            'WHERE u.id IN (SELECT user_id FROM ?? AS f WHERE f.user_id_friend = ? AND f.status = ?) ' +
-            'OR u.id IN (SELECT user_id_friend FROM ?? AS f2 WHERE f2.user_id = ? AND f2.status = ?)',
+            'WHERE u.id = (SELECT user_id FROM ?? AS f WHERE f.user_id_friend = ? AND f.status = ?) ' +
+            'OR u.id = (SELECT user_id_friend FROM ?? AS f2 WHERE f2.user_id = ? AND f2.status = ?)',
             [externalTable, this.#table, id, FriendRequestStatus.ACCEPTED, this.#table, id,
                 FriendRequestStatus.ACCEPTED]
         )
@@ -48,7 +48,7 @@ class FriendDAO {
      * Checks if exists a mutual friend request between two users.
      * @param {number} userID - User ID
      * @param {number} externalUserID - External user ID
-     * @returns {Promise} - Friend request between two users or null
+     * @returns {Promise} - Friend request between two users.
     */
     async #checkMutualFriendRequest(userID, externalUserID) {
         // Get friend request sent to user ID from external user ID
@@ -57,7 +57,7 @@ class FriendDAO {
             [this.#table, userID, externalUserID, externalUserID, userID]
         )
 
-        return results.length === 1 ? results[0] : null
+        return results
     }
 
     /*
