@@ -71,6 +71,26 @@ class AssistanceDAO {
 
         return AssistanceMessages.LEFT
     }
+
+    /*
+     * Gets all assistances for an event ID from the database.
+     * @param {Number} id - The ID of the event to get the assistances for.
+     * @returns {Promise} - Array of assistances
+    */
+    // TODO: Use this function to get the assistances of an event
+    async getEventAssistances(id) {
+        const foreignTable = 'assistances'
+
+        const [results] = global.connection.promise().query(
+            'SELECT u.id, u.name, u.last_name, u.email, a.punctuation, a.comment ' +
+            'FROM ?? AS u INNER JOIN ?? AS a ' +
+            'WHERE u.id IN (SELECT DISTINCT a2.user_id FROM ?? AS a2 ' +
+            'WHERE a2.event_id = ?)',
+            [this.#table, foreignTable, foreignTable, id]
+        )
+
+        return results
+    }
 }
 
 module.exports = AssistanceDAO

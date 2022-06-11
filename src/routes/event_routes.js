@@ -9,6 +9,10 @@ const HttpStatusCodes = require('../models/http_status_codes')
 const EventDAO = require('../dao/event_dao')
 const eventDAO = new EventDAO()
 
+// Import AssistanceDAO and create an instance
+const AssistanceDAO = require('../dao/assistance_dao')
+const assistanceDAO = new AssistanceDAO()
+
 // Import custom date time handler
 const Dates = require('../utils/dates')
 
@@ -453,6 +457,107 @@ router.delete('/:id', authenticateUser, async (req, res, next) => {
     res.status(HttpStatusCodes.OK).json({
         'message': `Event with ID ${id} has been deleted successfully`
     })
+})
+
+/*
+ * Deletes assistance of an authenticated user for the event with matching ID.
+ * HTTP Method: DELETE
+ * Endpoint: "/events/{event_id}/assistances"
+*/
+router.delete('/:eventID/assistances', authenticateUser, async (req, res, next) => {
+    // Get event ID from the URL path sent as parameter
+    const { eventID } = req.params
+
+    // Get user ID from the authentication token
+    const { USER_ID } = req
+
+    // Set received data to error stacktrace
+    let stacktrace = {
+        '_original': {
+            'user_id': USER_ID,
+            'event_id': eventID
+        }
+    }
+
+    // Check if event ID is a number
+    if (!validateNumber(eventID)) {
+        stacktrace['error'] = {
+            'reason': 'Event ID is not a number'
+        }
+
+        return next(new ErrorAPI(
+            'Invalid event ID',
+            HttpStatusCodes.BAD_REQUEST,
+            stacktrace
+        ))
+    }
+
+    // Check if exists event with matching ID
+    let event
+
+    try {
+        event = await eventDAO.getEventById(eventID)
+
+        if (!event) {
+            return next(new ErrorAPI(
+                'Event does not exist or was not found',
+                HttpStatusCodes.NOT_FOUND,
+                stacktrace
+            ))
+        }
+    } catch (error) {
+        // Handle error on get event by id from database
+        stacktrace['sql_error'] = error
+
+        return next(new ErrorAPI(
+            'An error has occurred while fetching an event by ID from the database',
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+
+    // Check if exists assistance of authenticated user for event with matching ID
+    let assistance
+
+    try {
+        assistance = await assistanceDAO.getAssistanceOfUserForEvent(USER_ID, eventID)
+
+        if (!assistance) {
+            return next(new ErrorAPI(
+                'Assistance does not exist or was not found',
+                HttpStatusCodes.NOT_FOUND,
+                stacktrace
+            ))
+        }
+    } catch (error) {
+        // Handle error on get assistance of authenticated user for event from database
+        stacktrace['sql_error'] = error
+
+        return next(new ErrorAPI(
+            'An error has occurred while fetching assistance of user for event from the database',
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+
+    // Delete assistance of authenticated user for event with matching ID
+    let result
+
+    try {
+        result = await assistanceDAO.deleteAssistance(assistance)
+    } catch (error) {
+        // Handle error on delete assistance of authenticated user for event from database
+        stacktrace['sql_error'] = error
+
+        return next(new ErrorAPI(
+            'An error has occurred while deleting an assistance of the authenticated user for event from the database',
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+
+    // Send response
+    res.status(HttpStatusCodes.OK).json(result)
 })
 
 module.exports = router

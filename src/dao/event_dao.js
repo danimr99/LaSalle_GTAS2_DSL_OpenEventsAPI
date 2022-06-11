@@ -76,19 +76,107 @@ class EventDAO {
     }
 
     /*
-     * Gets all assistances for an event ID from the database.
-     * @param {Number} id - The ID of the event to get the assistances for.
+     * Gets all events of a user from the database.
+     * @param {Number} id - The ID of the user to get the events for.
+     * returns {Promise} - Array of events
     */
-    // TODO: Use this function to get the assistances of an event
-    async getEventAssistances(id) {
+    async getEventsCreatedByUser(userID) {
+        const [results] = await global.connection.promise().query(
+            'SELECT * FROM ?? WHERE owner_id = ?',
+            [this.#table, userID]
+        )
+
+        return results
+    }
+
+    /*
+     * Gets all future events of a user from the database.
+     * @param {Number} id - The ID of the user to get the events for.
+     * returns {Promise} - Array of events
+    */
+    async getFutureEventsCreatedByUser(userID) {
+        const [results] = await global.connection.promise().query(
+            'SELECT * FROM ?? WHERE owner_id = ? AND eventStart_date > NOW()',
+            [this.#table, userID]
+        )
+
+        return results
+    }
+
+    /*
+     * Gets all finished events of a user from the database.
+     * @param {Number} id - The ID of the user to get the events for.
+     * returns {Promise} - Array of events
+    */
+    async getFinishedEventsCreatedByUser(userID) {
+        const [results] = await global.connection.promise().query(
+            'SELECT * FROM ?? WHERE owner_id = ? AND eventEnd_date < NOW()',
+            [this.#table, userID]
+        )
+
+        return results
+    }
+
+    /*
+     * Gets all active events of a user from the database.
+     * @param {Number} id - The ID of the user to get the events for.
+     * returns {Promise} - Array of events
+    */
+    async getActiveEventsCreatedByUser(userID) {
+        const [results] = await global.connection.promise().query(
+            'SELECT * FROM ?? WHERE owner_id = ? AND eventStart_date < NOW() AND eventEnd_date > NOW()',
+            [this.#table, userID]
+        )
+
+        return results
+    }
+
+    /*
+     * Gets all the events that a user is attending from the database.
+     * @param {Number} id - The ID of the user to get the events for.
+     * returns {Promise} - Array of events with the user rating.
+    */
+    async getAssistancesByUser(userID) {
         const foreignTable = 'assistances'
 
-        const [results] = global.connection.promise().query(
-            'SELECT u.id, u.name, u.last_name, u.email, a.punctuation, a.comment ' +
-            'FROM ?? AS u INNER JOIN ?? AS a ' +
-            'WHERE u.id IN (SELECT DISTINCT a2.user_id FROM ?? AS a2 ' +
-            'WHERE a2.event_id = ?)',
-            [this.#table, foreignTable, foreignTable, id]
+        const [results] = await global.connection.promise().query(
+            'SELECT e.*, a.punctuation, a.comment FROM ?? AS e INNER JOIN ?? AS a ON e.id = a.event_id' +
+            'WHERE a.user_id = ?',
+            [this.#table, foreignTable, userID]
+        )
+
+        return results
+    }
+
+    /*
+     * Gets all the future events that a user is attending from the database.
+     * @param {Number} id - The ID of the user to get the events for.
+     * returns {Promise} - Array of events with the user rating.
+    */
+    async getFutureAssistancesByUser(userID) {
+        const foreignTable = 'assistances'
+
+        const [results] = await global.connection.promise().query(
+            'SELECT e.*, a.punctuation, a.comment FROM ?? AS e INNER JOIN ?? AS a ON e.id = a.event_id ' +
+            'WHERE a.user_id = ? AND e.eventStart_date > NOW()',
+            [this.#table, foreignTable, userID]
+        )
+
+        return results
+    }
+
+    /*
+     * Gets all the finished events that a user has attended from the database.
+     * @param {Number} id - The ID of the user to get the events for.
+     * returns {Promise} - Array of events with the user rating.
+    */
+    async getFinishedAssistancesByUser(userID) {
+        const foreignTable = 'assistances'
+
+        const [results] = await global.connection.promise().query(
+            'SELECT e.*, a.punctuation, a.comment FROM ?? AS e INNER JOIN ?? AS a ON e.id = a.event_id ' +
+            'WHERE a.user_id = ? AND e.eventEnd_date < NOW()',
+            [this.#table, foreignTable, userID]
         )
 
         return results

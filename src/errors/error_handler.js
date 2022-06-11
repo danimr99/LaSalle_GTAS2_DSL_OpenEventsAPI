@@ -7,10 +7,12 @@ const HttpStatusCodes = require('../models/http_status_codes')
 */
 function errorHandler(error, _req, res, _next) {
     // Delete unnecessary error SQL information if exists
-    if(error.stacktrace.sql_error !== undefined && error.stacktrace.sql_error !== null) {
-        if(error.stacktrace.sql_error.sql) delete error.stacktrace.sql_error.sql
-        if(error.stacktrace.sql_error.sqlMessage) delete error.stacktrace.sql_error.sqlMessage
-        if(error.stacktrace.sql_error.message) delete error.stacktrace.sql_error.message
+    if(error.stacktrace){
+        if(error.stacktrace.sql_error !== undefined && error.stacktrace.sql_error !== null) {
+            if(error.stacktrace.sql_error.sql) delete error.stacktrace.sql_error.sql
+            if(error.stacktrace.sql_error.sqlMessage) delete error.stacktrace.sql_error.sqlMessage
+            if(error.stacktrace.sql_error.message) delete error.stacktrace.sql_error.message
+        }
     }
 
     // Send error response

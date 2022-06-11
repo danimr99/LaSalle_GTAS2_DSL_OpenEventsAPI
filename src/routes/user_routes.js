@@ -9,6 +9,10 @@ const HttpStatusCodes = require('../models/http_status_codes')
 const UserDAO = require('../dao/user_dao')
 const userDAO = new UserDAO()
 
+// Import EventDAO and create an instance
+const EventDAO = require('../dao/event_dao')
+const eventDAO = new EventDAO()
+
 // Import custom error 
 const ErrorAPI = require('../errors/error_api')
 
@@ -478,6 +482,513 @@ router.delete('/', authenticateUser, async (req, res, next) => {
     res.status(HttpStatusCodes.OK).json({
         'message': `User with ID ${USER_ID} was deleted successfully`
     })
+})
+
+/*
+ * Gets all events created by user with matching ID.
+ * HTTP Method: GET
+ * Endpoint: "/users/{user_id}/events"
+*/
+router.get('/:userID/events', authenticateUser, async (req, res, next) => {
+    // Get user ID from the URL path sent as parameter
+    const { userID } = req.params
+
+    // Set received data to error stacktrace
+    let stacktrace = {
+        '_original': {
+            'user_id': userID
+        }
+    }
+
+    // Check if user ID is a number
+    if (!validateNumber(userID)) {
+        stacktrace['invalid_user_id'] = userID
+
+        return next(new ErrorAPI(
+            `User ID ${userID} is not a number`,
+            HttpStatusCodes.BAD_REQUEST,
+            stacktrace
+        ))
+    }
+
+    // Get user matching with the ID
+    let user
+
+    try {
+        user = await userDAO.getUserByID(userID)
+    } catch (error) {
+        // Handle error on get user by ID from database
+        stacktrace['sql_error'] = error
+
+        return next(new ErrorAPI(
+            'An error has occurred while fetching a user by ID from the database',
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+
+    // Check if user exists
+    if (!user) {
+        return next(new ErrorAPI(
+            `User with ID ${userID} does not exist or was not found`,
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+
+    // Get all events created by user with matching ID
+    let events
+
+    try {
+        events = await eventDAO.getEventsCreatedByUser(userID)
+    } catch (error) {
+        // Handle error on get events by user ID from database
+        stacktrace['sql_error'] = error
+        
+        return next(new ErrorAPI(
+            'An error has occurred while fetching events by user ID from the database',
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+
+    // Send response
+    res.status(HttpStatusCodes.OK).json(events)
+})
+
+/*
+ * Gets future events created by user with matching ID.
+ * HTTP Method: GET
+ * Endpoint: "/users/{user_id}/events/future"
+*/
+router.get('/:userID/events/future', authenticateUser, async (req, res, next) => {
+    // Get user ID from the URL path sent as parameter
+    const { userID } = req.params
+
+    // Set received data to error stacktrace
+    let stacktrace = {
+        '_original': {
+            'user_id': userID
+        }
+    }
+
+    // Check if user ID is a number
+    if (!validateNumber(userID)) {
+        stacktrace['invalid_user_id'] = userID
+
+        return next(new ErrorAPI(
+            `User ID ${userID} is not a number`,
+            HttpStatusCodes.BAD_REQUEST,
+            stacktrace
+        ))
+    }
+
+    // Get user matching with the ID
+    let user
+
+    try {
+        user = await userDAO.getUserByID(userID)
+    } catch (error) {
+        // Handle error on get user by ID from database
+        stacktrace['sql_error'] = error
+
+        return next(new ErrorAPI(
+            'An error has occurred while fetching a user by ID from the database',
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+
+    // Check if user exists
+    if (!user) {
+        return next(new ErrorAPI(
+            `User with ID ${userID} does not exist or was not found`,
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+
+    // Get all future events created by user with matching ID
+    let events
+
+    try {
+        events = await eventDAO.getFutureEventsCreatedByUser(userID)
+    } catch (error) {
+        // Handle error on get events by user ID from database
+        stacktrace['sql_error'] = error
+
+        return next(new ErrorAPI(
+            'An error has occurred while fetching events by user ID from the database',
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+
+    // Send response
+    res.status(HttpStatusCodes.OK).json(events)
+})
+
+/*
+ * Gets finished events created by user with matching ID.
+ * HTTP Method: GET
+ * Endpoint: "/users/{user_id}/events/finished"
+*/
+router.get('/:userID/events/finished', authenticateUser, async (req, res, next) => {
+    // Get user ID from the URL path sent as parameter
+    const { userID } = req.params
+
+    // Set received data to error stacktrace
+    let stacktrace = {
+        '_original': {
+            'user_id': userID
+        }
+    }
+
+    // Check if user ID is a number
+    if (!validateNumber(userID)) {
+        stacktrace['invalid_user_id'] = userID
+
+        return next(new ErrorAPI(
+            `User ID ${userID} is not a number`,
+            HttpStatusCodes.BAD_REQUEST,
+            stacktrace
+        ))
+    }
+
+    // Get user matching with the ID
+    let user
+
+    try {
+        user = await userDAO.getUserByID(userID)
+    } catch (error) {
+        // Handle error on get user by ID from database
+        stacktrace['sql_error'] = error
+
+        return next(new ErrorAPI(
+            'An error has occurred while fetching a user by ID from the database',
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+
+    // Check if user exists
+    if (!user) {
+        return next(new ErrorAPI(
+            `User with ID ${userID} does not exist or was not found`,
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+
+    // Get all finished events created by user with matching ID
+    let events
+
+    try {
+        events = await eventDAO.getFinishedEventsCreatedByUser(userID)
+    } catch (error) {
+        // Handle error on get events by user ID from database
+        stacktrace['sql_error'] = error
+
+        return next(new ErrorAPI(
+            'An error has occurred while fetching events by user ID from the database',
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+
+    // Send response
+    res.status(HttpStatusCodes.OK).json(events)
+})
+
+/*
+ * Gets active events created by user with matching ID.
+ * HTTP Method: GET
+ * Endpoint: "/users/{user_id}/events/finished"
+*/
+router.get('/:userID/events/current', authenticateUser, async (req, res, next) => {
+    // Get user ID from the URL path sent as parameter
+    const { userID } = req.params
+
+    // Set received data to error stacktrace
+    let stacktrace = {
+        '_original': {
+            'user_id': userID
+        }
+    }
+
+    // Check if user ID is a number
+    if (!validateNumber(userID)) {
+        stacktrace['invalid_user_id'] = userID
+
+        return next(new ErrorAPI(
+            `User ID ${userID} is not a number`,
+            HttpStatusCodes.BAD_REQUEST,
+            stacktrace
+        ))
+    }
+
+    // Get user matching with the ID
+    let user
+
+    try {
+        user = await userDAO.getUserByID(userID)
+    } catch (error) {
+        // Handle error on get user by ID from database
+        stacktrace['sql_error'] = error
+
+        return next(new ErrorAPI(
+            'An error has occurred while fetching a user by ID from the database',
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+
+    // Check if user exists
+    if (!user) {
+        return next(new ErrorAPI(
+            `User with ID ${userID} does not exist or was not found`,
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+
+    // Get all active events created by user with matching ID
+    let events
+
+    try {
+        events = await eventDAO.getActiveEventsCreatedByUser(userID)
+    } catch (error) {
+        // Handle error on get events by user ID from database
+        stacktrace['sql_error'] = error
+
+        return next(new ErrorAPI(
+            'An error has occurred while fetching events by user ID from the database',
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+
+    // Send response
+    res.status(HttpStatusCodes.OK).json(events)
+})
+
+/*
+ * Gets all events with assistance from user with matching ID.
+ * HTTP Method: GET
+ * Endpoint: "/users/{user_id}/assistances"
+*/
+router.get('/:userID/assistances', authenticateUser, async (req, res, next) => {
+    // Get user ID from the URL path sent as parameter
+    const { userID } = req.params
+
+    // Set received data to error stacktrace
+    let stacktrace = {
+        '_original': {
+            'user_id': userID
+        }
+    }
+
+    // Check if user ID is a number
+    if (!validateNumber(userID)) {
+        stacktrace['invalid_user_id'] = userID
+
+        return next(new ErrorAPI(
+            `User ID ${userID} is not a number`,
+            HttpStatusCodes.BAD_REQUEST,
+            stacktrace
+        ))
+    }
+
+    // Get user matching with the ID
+    let user
+
+    try {
+        user = await userDAO.getUserByID(userID)
+    }
+    catch (error) {
+        // Handle error on get user by ID from database
+        stacktrace['sql_error'] = error
+
+        return next(new ErrorAPI(
+            'An error has occurred while fetching a user by ID from the database',
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+
+    // Check if user exists
+    if (!user) {
+        return next(new ErrorAPI(
+            `User with ID ${userID} does not exist or was not found`,
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+
+    // Get all events with assistance from user with matching ID
+    let events
+
+    try {
+        events = await eventDAO.getAssistancesByUser(userID)
+    } catch (error) {
+        // Handle error on get events by user ID from database
+        stacktrace['sql_error'] = error
+
+        return next(new ErrorAPI(
+            'An error has occurred while fetching events by user ID from the database',
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+
+    // Send response
+    res.status(HttpStatusCodes.OK).json(events)
+})
+
+/*
+ * Gets all future events with assistance from user with matching ID.
+ * HTTP Method: GET
+ * Endpoint: "/users/{user_id}/assistances/future"
+*/
+router.get('/:userID/assistances/future', authenticateUser, async (req, res, next) => {
+    // Get user ID from the URL path sent as parameter
+    const { userID } = req.params
+
+    // Set received data to error stacktrace
+    let stacktrace = {
+        '_original': {
+            'user_id': userID
+        }
+    }
+
+    // Check if user ID is a number
+    if (!validateNumber(userID)) {
+        stacktrace['invalid_user_id'] = userID
+
+        return next(new ErrorAPI(
+            `User ID ${userID} is not a number`,
+            HttpStatusCodes.BAD_REQUEST,
+            stacktrace
+        ))
+    }
+
+    // Get user matching with the ID
+    let user
+
+    try {
+        user = await userDAO.getUserByID(userID)
+    }
+    catch (error) {
+        // Handle error on get user by ID from database
+        stacktrace['sql_error'] = error
+
+        return next(new ErrorAPI(
+            'An error has occurred while fetching a user by ID from the database',
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+
+    // Check if user exists
+    if (!user) {
+        return next(new ErrorAPI(
+            `User with ID ${userID} does not exist or was not found`,
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+
+    // Get all future events with assistance from user with matching ID
+    let events
+
+    try {
+        events = await eventDAO.getFutureAssistancesByUser(userID)
+    } catch (error) {
+        // Handle error on get events by user ID from database
+        stacktrace['sql_error'] = error
+
+        return next(new ErrorAPI(
+            'An error has occurred while fetching events by user ID from the database',
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+
+    // Send response
+    res.status(HttpStatusCodes.OK).json(events)
+})
+
+/*
+ * Gets all finished events with assistance from user with matching ID.
+ * HTTP Method: GET
+ * Endpoint: "/users/{user_id}/assistances/future"
+*/
+router.get('/:userID/assistances/finished', authenticateUser, async (req, res, next) => {
+    // Get user ID from the URL path sent as parameter
+    const { userID } = req.params
+
+    // Set received data to error stacktrace
+    let stacktrace = {
+        '_original': {
+            'user_id': userID
+        }
+    }
+
+    // Check if user ID is a number
+    if (!validateNumber(userID)) {
+        stacktrace['invalid_user_id'] = userID
+
+        return next(new ErrorAPI(
+            `User ID ${userID} is not a number`,
+            HttpStatusCodes.BAD_REQUEST,
+            stacktrace
+        ))
+    }
+
+    // Get user matching with the ID
+    let user
+
+    try {
+        user = await userDAO.getUserByID(userID)
+    }
+    catch (error) {
+        // Handle error on get user by ID from database
+        stacktrace['sql_error'] = error
+
+        return next(new ErrorAPI(
+            'An error has occurred while fetching a user by ID from the database',
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+
+    // Check if user exists
+    if (!user) {
+        return next(new ErrorAPI(
+            `User with ID ${userID} does not exist or was not found`,
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+
+    // Get all finished events with assistance from user with matching ID
+    let events
+
+    try {
+        events = await eventDAO.getFinishedAssistancesByUser(userID)
+    } catch (error) {
+        // Handle error on get events by user ID from database
+        stacktrace['sql_error'] = error
+
+        return next(new ErrorAPI(
+            'An error has occurred while fetching events by user ID from the database',
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+
+    // Send response
+    res.status(HttpStatusCodes.OK).json(events)
 })
 
 module.exports = router
