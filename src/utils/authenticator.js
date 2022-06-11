@@ -42,10 +42,12 @@ async function authenticateUser(req, _res, next) {
 
         // Get the user who is the owner of the access token
         let user = await userDAO.getUserByID(decoded.id)
+        user = user[0]
 
         // Check if exists user matching ID
         if(!user) return next(authenticationError)
 
+        // Set user ID on request object
         req.USER_ID = decoded.id
 
         return next()

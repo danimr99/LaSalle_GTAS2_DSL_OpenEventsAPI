@@ -100,8 +100,10 @@ router.post('/', async (req, res, next) => {
     }
 
     // Check if email address already exists
+    let userByEmail
     try {
-        const userByEmail = await userDAO.getUserByEmail(user.email)
+        userByEmail = await userDAO.getUserByEmail(user.email)
+        userByEmail = userByEmail[0]
 
         if (userByEmail) {
             stacktrace['invalid_email'] = user.email
@@ -179,6 +181,7 @@ router.post('/login', async (req, res, next) => {
 
     try {
         user = await userDAO.getUserByEmail(credentials.email)
+        user = user[0]
     } catch (error) {
         // Handle error on get user by email address from database
         stacktrace['sql_error'] = error
@@ -375,6 +378,7 @@ router.put('/', authenticateUser, async (req, res, next) => {
 
     try {
         user = await userDAO.getUserByID(USER_ID)
+        user = user[0]
     } catch (error) {
         // Handle error on get user by ID from database
         stacktrace['sql_error'] = error
@@ -398,8 +402,44 @@ router.put('/', authenticateUser, async (req, res, next) => {
     // Update user depending on the fields received
     if (req.body.name) user.name = req.body.name
     if (req.body.last_name) user.last_name = req.body.last_name
-    if (req.body.email) user.email = req.body.email
-    if (req.body.password) user.password = await encryptPassword(req.body.password)
+
+    if (req.body.email) {
+        // Check if email is valid
+        if(!validateEmail(req.body.email)) {
+            stacktrace['error'] = {
+                'reason': 'Email is not valid'
+            }
+
+            return next(new ErrorAPI(
+                'Invalid email',
+                HttpStatusCodes.BAD_REQUEST,
+                stacktrace
+            ))
+        }
+
+        // Set new email
+        user.email = req.body.email
+    }
+
+    if (req.body.password) {
+        // Check if password is valid
+        if(!validatePassword(req.body.password)) {
+            stacktrace['error'] = {
+                'reason': 'Password is not valid'
+            }
+
+            return next(new ErrorAPI(
+                'Invalid password',
+                HttpStatusCodes.BAD_REQUEST,
+                stacktrace
+            ))
+        }
+
+        // Set new password
+        user.password = await encryptPassword(req.body.password)
+    }
+
+    if (req.body.image) user.image = req.body.image
 
     // Change data of error stacktrace
     stacktrace = {

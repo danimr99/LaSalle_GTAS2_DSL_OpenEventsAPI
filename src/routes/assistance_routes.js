@@ -32,6 +32,7 @@ const { validateNumber, validatePunctuation } = require('../utils/validator')
  * HTTP Method: POST
  * Endpoint: "/assistances/{event_id}"
 */
+// FIXME - Remove from assistances and move it to /events/{event_id}/assistances
 router.post('/:eventID', authenticateUser, async (req, res, next) => {
     // Get event ID from the URL path sent as parameter
     const { eventID } = req.params

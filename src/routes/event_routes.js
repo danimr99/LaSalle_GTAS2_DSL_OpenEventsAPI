@@ -372,7 +372,7 @@ router.put('/:eventID', authenticateUser, async (req, res, next) => {
 })
 
 /*
- * Deletes event with matching ID.
+ * Deletes event with matching ID if authenticated user is the owner of it.
  * HTTP Method: DELETE
  * Endpoint: "/events/{event_id}"
 */
