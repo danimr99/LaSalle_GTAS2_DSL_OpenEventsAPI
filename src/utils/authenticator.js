@@ -3,7 +3,10 @@ const httpStatusCodes = require('../models/http_status_codes')
 
 // Import library to handle JsonWebTokens
 const jwt = require('jsonwebtoken')
+
+// Import UserDAO and create an instance of it
 const UserDAO = require('../dao/user_dao')
+const userDAO = new UserDAO()
 
 // Set error to throw for unauthenticated users
 const authenticationError = new ErrorAPI(
@@ -17,7 +20,7 @@ const authenticationError = new ErrorAPI(
  * @param {Object} user - User information to generate the token.
 */
 function generateAuthenticationToken(user) {
-    return jwt.sign({ id: user.id, name: user.name, password: user.password }, process.env.JWT_KEY)
+    return jwt.sign({ id: user.id }, process.env.JWT_KEY)
 }
 
 /*
@@ -38,13 +41,12 @@ async function authenticateUser(req, _res, next) {
         const decoded = jwt.verify(token, process.env.JWT_KEY)
 
         // Get the user who is the owner of the access token
-        let user = await new UserDAO().getUserByID(decoded.id)
+        let user = await userDAO.getUserByID(decoded.id)
 
         // Check if exists user matching ID
         if(!user) return next(authenticationError)
 
         req.USER_ID = decoded.id
-        req.USER_EMAIL = decoded.email
 
         return next()
     } catch (error) {

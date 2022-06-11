@@ -29,7 +29,7 @@ global.connection = mysql.createConnection(database)
 const app = express()
 const port = 3000
 
-// Custom routes
+// Import custom routes
 const userRoutes = require('./routes/user_routes')
 const eventRoutes = require('./routes/event_routes')
 const assistanceRoutes = require('./routes/assistance_routes')
@@ -40,7 +40,7 @@ const friendRoutes = require('./routes/friend_routes')
 const ErrorAPI = require('./errors/error_api')
 const { errorHandler } = require('./errors/error_handler')
 
-
+// Import HTTP status codes
 const HttpStatusCodes = require('./models/http_status_codes')
 
 // Middlewares
@@ -62,7 +62,7 @@ app.all('*', (req, _res, next) => {
         'url': req.originalUrl
     }
 
-    next(new ErrorAPI(
+    return next(new ErrorAPI(
         'Requested endpoint does not exist on the API', 
         HttpStatusCodes.NOT_FOUND,
         stacktrace

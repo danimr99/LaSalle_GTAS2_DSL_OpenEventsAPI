@@ -9,7 +9,7 @@ const assistanceMessages = {
         message: 'Assistance deleted',
     },
     RATED: {
-        message: 'Assistance rated',
+        message: 'Assistance updated',
     }
 }
 

@@ -4,7 +4,7 @@ class ErrorAPI extends Error {
 
         this.statusCode = statusCode
         this.stacktrace = stacktrace
-        Error.captureStackTrace(this)        
+        Error.captureStackTrace(this)  
     }
 }
 

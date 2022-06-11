@@ -103,9 +103,6 @@ router.post('/', authenticateUser, async (req, res, next) => {
 
     // Create event on the database
     try {
-        //event.eventStart_date = Dates.toDate(event.eventStart_date)
-        //event.eventEnd_date = Dates.toDate(event.eventEnd_date)
-
         await eventDAO.createEvent(event)
     } catch (error) {
         // Handle error on create event to database
@@ -167,7 +164,7 @@ router.get('/', authenticateUser, async (_req, res, next) => {
 */
 router.get('/search', authenticateUser, async (req, res, next) => {
     // Get query parameters from URL path sent as query
-    const { location, keyword, date } = req.query
+    const { location = '', keyword = '', date = '' } = req.query
 
     // Set received data to error stacktrace
     let stacktrace = {
@@ -195,17 +192,18 @@ router.get('/search', authenticateUser, async (req, res, next) => {
     }
 
     // Filter by query parameters
-    events = events.filter(
-        event => {
-            // Split dates and times for event dates
-            const [startDate, startTime] = Dates.toISO(event.eventStart_date).split('T')
-            const [endDate, endTime] = Dates.toISO(event.eventEnd_date).split('T')
-
-            return event.name.includes(keyword) || event.location.includes(location) ||
-                startDate.includes(date) || startTime.includes(date) ||
-                endDate.includes(date) || endTime.includes(date)
+    events = events.filter(event => {
+        if (event.name.toLowerCase().includes(keyword.toLowerCase())) {
+            if (event.location.toLowerCase().includes(location.toLowerCase())) {
+                // Split event start date and time
+                const startDate = Dates.toISO(event.eventStart_date).split('T')[0]
+                
+                return startDate.includes(date)
+            }
         }
-    )
+
+        return false
+    })
 
     // Send response
     res.status(HttpStatusCodes.OK).json(events)

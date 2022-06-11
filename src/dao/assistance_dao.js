@@ -55,7 +55,21 @@ class AssistanceDAO {
             [this.#table, assistance.comment, assistance.punctuation, assistance.user_id, assistance.event_id]
         )
 
-        return AssistanceMessages.EDITED
+        return AssistanceMessages.RATED
+    }
+
+    /*
+     * Deletes the assistance of a user for an event.
+     * @param {Object} assistance - The assistance to delete.
+     * @returns {Promise} - Notification message.
+    */
+    async deleteAssistance(assistance) {
+        await global.connection.promise().query(
+            'DELETE FROM ?? WHERE user_id = ? AND event_id = ?',
+            [this.#table, assistance.user_id, assistance.event_id]
+        )
+
+        return AssistanceMessages.LEFT
     }
 }
 

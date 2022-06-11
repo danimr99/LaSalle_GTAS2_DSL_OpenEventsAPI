@@ -4,6 +4,10 @@ const emailValidator = require('@sideway/address')
 // Set password minimum length
 const passwordMinLength = 8
 
+// Set event punctuation minimum value
+const eventPunctuationMin = 0
+const eventPunctuationMax = 10
+
 
 /*
  * Checks if an object has all the properties correctly fulfilled (not null, undefined or empty). 
@@ -58,11 +62,25 @@ function validateNumber(number) {
     return !isNaN(number)
 }
 
+/*
+ * Checks if an event punctuation value is valid.
+ * @param {String} number - The value to check.
+ * @returns {Boolean} - True if the value is a number, false otherwise.
+*/
+function validatePunctuation(punctuation) {
+    if(!validateNumber(punctuation)) {
+        return false
+    }
+
+    return punctuation >= eventPunctuationMin && punctuation <= eventPunctuationMax
+}
+
 module.exports = { 
     validateObject,
     validateEmail, 
     validatePassword, 
     validateDateTimeString,
     validateNumber,
+    validatePunctuation,
     passwordMinLength 
 }
