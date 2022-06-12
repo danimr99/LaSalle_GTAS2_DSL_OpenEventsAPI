@@ -163,7 +163,12 @@ class FriendDAO {
                 [userID, externalUserID, externalUserID, userID]
             )
 
-            // TODO Delete messages between both users
+            // Delete messages between both users
+            await global.connection.promise().query(
+                'DELETE FROM messages WHERE (user_id_send = ? AND user_id_received = ?) ' + 
+                'OR (user_id_send = ? AND user_id_received = ?)',
+                [userID, externalUserID, externalUserID, userID]
+            )
 
             return FriendRequestMessages.DELETED
         } else {
