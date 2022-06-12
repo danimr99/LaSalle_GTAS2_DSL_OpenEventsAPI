@@ -9,6 +9,10 @@ const HttpStatusCodes = require('../models/http_status_codes')
 const FriendDAO = require('../dao/friend_dao')
 const friendDAO = new FriendDAO()
 
+// Import EventDAO and create an instance
+const UserDAO = require('../dao/user_dao')
+const userDAO = new UserDAO()
+
 // Import custom error 
 const ErrorAPI = require('../errors/error_api')
 
@@ -132,9 +136,47 @@ router.post('/:userID', authenticateUser, async (req, res, next) => {
         ))
     }
 
-    // TODO Check if exists external user with matching ID
+    // Check if exists external user with matching ID
+    let externalUser 
 
-    // TODO Check if authenticated user is not trying to send a friend request to himself/herself
+    try {
+        externalUser = await userDAO.getUserByID(externalUserID)
+
+        // Check if external user exists
+        if (!externalUser) {
+            stacktrace['error'] = {
+                'reason': 'External user does not exist'
+            }
+
+            return next(new ErrorAPI(
+                'External user does not exist',
+                HttpStatusCodes.NOT_FOUND,
+                stacktrace
+            ))
+        }
+    } catch (error) {
+        // Handle error on fetch external user from database
+        stacktrace['sql_error'] = error
+
+        return next(new ErrorAPI(
+            'An error has occurred while fetching external user from database',
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+
+    // Check if authenticated user is not trying to send a friend request to himself/herself
+    if (USER_ID === externalUserID) {
+        stacktrace['error'] = {
+            'reason': 'Authenticated user is trying to send a friend request to himself/herself'
+        }
+
+        return next(new ErrorAPI(
+            'Authenticated user is trying to send a friend request to himself/herself',
+            HttpStatusCodes.BAD_REQUEST,
+            stacktrace
+        ))
+    }
 
     // Create a friend request to the external user
     let result
