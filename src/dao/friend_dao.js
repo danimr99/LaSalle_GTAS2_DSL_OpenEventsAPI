@@ -2,46 +2,33 @@
 const [FriendRequestStatus, FriendRequestMessages] = require('../models/friend_request')
 
 class FriendDAO {
-    #table
-
-    constructor() {
-        this.#table = 'friends'
-    }
+    constructor() {}
 
     /*
      * Get all users that have sent a friend request to user ID and the friend request status is pending.
-     * @param {number} id - User ID
+     * @param {number} userID - User ID
      * @returns {Promise<Array>} - Array of users
     */
-    async getPotentialFriends(id) {
-        const externalTable = 'users'
-
-        const [results] = await global.connection.promise().query(
-            'SELECT * FROM ?? AS u ' +
-            'WHERE u.id IN (SELECT user_id FROM ?? AS f WHERE f.user_id_friend = ? AND f.status = ?)',
-            [externalTable, this.#table, id, FriendRequestStatus.PENDING]
+    async getPotentialFriends(userID) {
+        return await global.connection.promise().query(
+            'SELECT * FROM users AS u ' +
+            'WHERE u.id IN (SELECT user_id FROM friends AS f WHERE f.user_id_friend = ? AND f.status = ?)',
+            [userID, FriendRequestStatus.PENDING]
         )
-
-        return results
     }
 
     /*
      * Get all friends of user ID.
-     * @param {number} id - User ID
+     * @param {number} userID - User ID
      * @returns {Promise<Array>} - Array of users
     */
-    async getFriends(id) {
-        const externalTable = 'users'
-
-        const [results] = await global.connection.promise().query(
-            'SELECT * FROM ?? AS u ' +
-            'WHERE u.id = (SELECT user_id FROM ?? AS f WHERE f.user_id_friend = ? AND f.status = ?) ' +
-            'OR u.id = (SELECT user_id_friend FROM ?? AS f2 WHERE f2.user_id = ? AND f2.status = ?)',
-            [externalTable, this.#table, id, FriendRequestStatus.ACCEPTED, this.#table, id,
-                FriendRequestStatus.ACCEPTED]
+    async getFriends(userID) {
+        return await global.connection.promise().query(
+            'SELECT * FROM users AS u ' +
+            'WHERE u.id = (SELECT user_id FROM friends AS f WHERE f.user_id_friend = ? AND f.status = ?) ' +
+            'OR u.id = (SELECT user_id_friend FROM friends AS f2 WHERE f2.user_id = ? AND f2.status = ?)',
+            [userID, FriendRequestStatus.ACCEPTED, userID, FriendRequestStatus.ACCEPTED]
         )
-
-        return results
     }
 
     /*
@@ -51,13 +38,10 @@ class FriendDAO {
      * @returns {Promise} - Friend request between two users.
     */
     async #checkMutualFriendRequest(userID, externalUserID) {
-        // Get friend request sent to user ID from external user ID
-        const [results] = await global.connection.promise().query(
-            'SELECT * FROM ?? WHERE (user_id = ? AND user_id_friend = ?) OR (user_id = ? AND user_id_friend = ?)',
-            [this.#table, userID, externalUserID, externalUserID, userID]
+        return await global.connection.promise().query(
+            'SELECT * FROM friends WHERE (user_id = ? AND user_id_friend = ?) OR (user_id = ? AND user_id_friend = ?)',
+            [userID, externalUserID, externalUserID, userID]
         )
-
-        return results
     }
 
     /*
@@ -66,10 +50,9 @@ class FriendDAO {
      * @param {number} externalUserID - External user ID
     */
     async #updateFriendRequestStatus(userID, externalUserID) {
-        // Update friend request to accepted
         await global.connection.promise().query(
-            'UPDATE ?? SET status = ? WHERE user_id = ? AND user_id_friend = ?',
-            [this.#table, FriendRequestStatus.ACCEPTED, externalUserID, userID]
+            'UPDATE friends SET status = ? WHERE user_id = ? AND user_id_friend = ?',
+            [FriendRequestStatus.ACCEPTED, externalUserID, userID]
         )
     }
 
@@ -114,9 +97,9 @@ class FriendDAO {
             // It does not exist a friend request between both users
             // Create friend request
             await global.connection.promise().query(
-                'INSERT INTO ?? (user_id, user_id_friend, status) VALUES (?, ?, ?)' +
+                'INSERT INTO friends (user_id, user_id_friend, status) VALUES (?, ?, ?)' +
                 ' ON DUPLICATE KEY UPDATE user_id = user_id;',
-                [this.#table, userID, externalUserID, FriendRequestStatus.PENDING]
+                [userID, externalUserID, FriendRequestStatus.PENDING]
             )
 
             return FriendRequestMessages.SENT
@@ -176,14 +159,13 @@ class FriendDAO {
         if (existsFriendRequest) {
             // Delete existing friend request or friendship between both users
             await global.connection.promise().query(
-                'DELETE FROM ?? WHERE (user_id = ? AND user_id_friend = ?) OR (user_id = ? AND user_id_friend = ?)',
-                [this.#table, userID, externalUserID, externalUserID, userID]
+                'DELETE FROM friends WHERE (user_id = ? AND user_id_friend = ?) OR (user_id = ? AND user_id_friend = ?)',
+                [userID, externalUserID, externalUserID, userID]
             )
 
             // TODO Delete messages between both users
 
             return FriendRequestMessages.DELETED
-
         } else {
             // It does not exist a friend request between both users
             return FriendRequestMessages.NOT_FOUND

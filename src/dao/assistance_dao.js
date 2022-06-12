@@ -2,11 +2,7 @@
 const AssistanceMessages = require('../models/assistance_messages')
 
 class AssistanceDAO {
-    #table
-
-    constructor() {
-        this.#table = 'assistances'
-    }
+    constructor() {}
 
     /*
      * Creates a new assistance to the database.
@@ -21,8 +17,8 @@ class AssistanceDAO {
         // Check if user is already assisting to the event
         if (!existsAssistance) { 
             await global.connection.promise().query(
-                'INSERT INTO ?? (user_id, event_id) VALUES (?, ?)',
-                [this.#table, userID, eventID]
+                'INSERT INTO assistances (user_id, event_id) VALUES (?, ?)',
+                [userID, eventID]
             )
 
             return AssistanceMessages.JOINED
@@ -38,12 +34,10 @@ class AssistanceDAO {
      * @returns {Promise} - The assistance of the user for the event.
     */
     async getAssistanceOfUserForEvent(userID, eventID) {
-        const [results] = await global.connection.promise().query(
-            'SELECT * FROM ?? WHERE user_id = ? AND event_id = ?',
-            [this.#table, userID, eventID]
+        return await global.connection.promise().query(
+            'SELECT * FROM assistances WHERE user_id = ? AND event_id = ?',
+            [userID, eventID]
         )
-
-        return results
     }
 
     /*
@@ -53,8 +47,8 @@ class AssistanceDAO {
     */
     async editAssistance(assistance) {
         await global.connection.promise().query(
-            'UPDATE ?? SET comment = ?, punctuation = ? WHERE user_id = ? AND event_id = ?',
-            [this.#table, assistance.comment, assistance.punctuation, assistance.user_id, assistance.event_id]
+            'UPDATE assistances SET comment = ?, punctuation = ? WHERE user_id = ? AND event_id = ?',
+            [assistance.comment, assistance.punctuation, assistance.user_id, assistance.event_id]
         )
 
         return AssistanceMessages.RATED
@@ -67,8 +61,8 @@ class AssistanceDAO {
     */
     async deleteAssistance(assistance) {
         await global.connection.promise().query(
-            'DELETE FROM ?? WHERE user_id = ? AND event_id = ?',
-            [this.#table, assistance.user_id, assistance.event_id]
+            'DELETE FROM assistances WHERE user_id = ? AND event_id = ?',
+            [assistance.user_id, assistance.event_id]
         )
 
         return AssistanceMessages.LEFT
@@ -76,21 +70,17 @@ class AssistanceDAO {
 
     /*
      * Gets all users with their corresponding assistances for an event ID from the database.
-     * @param {Number} id - The ID of the event to get the assistances for.
+     * @param {Number} eventID - The ID of the event to get the assistances for.
      * @returns {Promise} - Array of users with their assistance for the event.
     */
-    async getEventAssistances(id) {
-        const foreignTable = 'users'
-
-        const [results] = await global.connection.promise().query(
+    async getEventAssistances(eventID) {
+        return await global.connection.promise().query(
             'SELECT u.id, u.name, u.last_name, u.email, a.punctuation, a.comment ' +
-            'FROM ?? AS u INNER JOIN ?? AS a ON u.id = a.user_id ' +
-            'WHERE u.id IN (SELECT DISTINCT a2.user_id FROM ?? AS a2 ' +
+            'FROM users AS u INNER JOIN assistances AS a ON u.id = a.user_id ' +
+            'WHERE u.id IN (SELECT DISTINCT a2.user_id FROM assistances AS a2 ' +
             'WHERE a2.event_id = ?)',
-            [foreignTable, this.#table, this.#table, id]
+            [eventID]
         )
-
-        return results
     }
 
     /*
@@ -100,16 +90,12 @@ class AssistanceDAO {
      * @returns {Promise} - User with his/her assistance for the event.
     */
     async getUserEventAssistance(eventID, userID) {
-        const foreignTable = 'users'
-
-        const [results] = await global.connection.promise().query(
-            'SELECT a.* FROM ?? AS u INNER JOIN ?? AS a ON u.id = a.user_id ' +
-            'WHERE u.id IN (SELECT DISTINCT a2.user_id FROM ?? AS a2 ' +
+        return await global.connection.promise().query(
+            'SELECT a.* FROM users AS u INNER JOIN assistances AS a ON u.id = a.user_id ' +
+            'WHERE u.id IN (SELECT DISTINCT a2.user_id FROM assistances AS a2 ' +
             'WHERE a2.event_id = ? AND a2.user_id = ?)',
-            [foreignTable, this.#table, this.#table, eventID, userID]
+            [eventID, userID]
         )
-
-        return results
     }
 }
 

@@ -17,8 +17,8 @@ class UserDAO {
         const encryptedPassword = await encryptPassword(user.password)
 
         await global.connection.promise().query(
-            'INSERT INTO ?? (name, last_name, email, password, image) VALUES (?, ?, ?, ?, ?)',
-            [this.#table, user.name, user.last_name, user.email, encryptedPassword, user.image]
+            'INSERT INTO users (name, last_name, email, password, image) VALUES (?, ?, ?, ?, ?)',
+            [user.name, user.last_name, user.email, encryptedPassword, user.image]
         )
     }
 
@@ -28,12 +28,10 @@ class UserDAO {
      * @returns {Promise} - A user.
     */
     async getUserByEmail(email) {
-        const [results] = await global.connection.promise().query(
-            'SELECT * FROM ?? WHERE email LIKE ?',
-            [this.#table, email]
+        return await global.connection.promise().query(
+            'SELECT * FROM users WHERE email LIKE ?',
+            [email]
         )
-
-        return results
     }
 
     /*
@@ -41,22 +39,19 @@ class UserDAO {
      * @returns {Promise} - An array of users.
     */
     async getAllUsers() {
-        const [results] = await global.connection.promise().query('SELECT * FROM ??', [this.#table])
-        return results
+        return await global.connection.promise().query('SELECT * FROM users')
     }
 
     /*
      * Gets a user by ID from the database.
-     * @param {Number} id - User ID to be searched.
+     * @param {Number} userID - User ID to be searched.
      * @returns {Promise} - A user.
     */
-    async getUserByID(id) {
-        const [results] = await global.connection.promise().query(
-            'SELECT * FROM ?? WHERE id = ?',
-            [this.#table, id]
+    async getUserByID(userID) {
+        return await global.connection.promise().query(
+            'SELECT * FROM users WHERE id = ?',
+            [userID]
         )
-
-        return results
     }
 
     /*
@@ -65,13 +60,11 @@ class UserDAO {
      * @returns {Promise} - An array of users.
     */
     async searchUsers(search) {
-        const [results] = await global.connection.promise().query(
-            'SELECT * FROM ?? WHERE name LIKE CONCAT(\'%\', ?, \'%\') ' +
+        return await global.connection.promise().query(
+            'SELECT * FROM users WHERE name LIKE CONCAT(\'%\', ?, \'%\') ' +
             'OR last_name LIKE CONCAT(\'%\', ?, \'%\') OR email LIKE CONCAT(\'%\', ?, \'%\')',
-            [this.#table, search, search, search]
+            [search, search, search]
         )
-
-        return results
     }
 
     /*
@@ -80,35 +73,32 @@ class UserDAO {
     */
     async updateUser(user) {
         await global.connection.promise().query(
-            'UPDATE ?? SET name = ?, last_name = ?, email = ?, password = ?, image = ? WHERE id = ?',
-            [this.#table, user.name, user.last_name, user.email, user.password, user.image, user.id]
+            'UPDATE users SET name = ?, last_name = ?, email = ?, password = ?, image = ? WHERE id = ?',
+            [user.name, user.last_name, user.email, user.password, user.image, user.id]
         )
     }
 
     /*
      * Deletes a user by ID from the database.
-     * @param {Number} id - User ID to be deleted.
+     * @param {Number} userID - User ID to be deleted.
     */
-    async deleteUserByID(id) {
+    async deleteUserByID(userID) {
         await global.connection.promise().query(
-            'DELETE FROM ?? WHERE id = ?',
-            [this.#table, id]
+            'DELETE FROM users WHERE id = ?',
+            [userID]
         )
     }
 
     /*
      * Gets the average score given by assistants of finished events created by a user.
-     * @param {Number} id - User ID to be searched.
+     * @param {Number} userID - User ID to be searched.
      * @returns {Promise} - Average score.
     */
     async getUserAverageScore(userID) {
-        const eventsTable = 'events'
-        const assistancesTable = 'assistances'
-
         const [results] = await global.connection.promise().query(
-            'SELECT ROUND(AVG(a.punctuation), 2) AS average_score FROM ?? AS a WHERE a.event_id IN ' +
-            '(SELECT DISTINCT e.id FROM ?? AS e WHERE e.owner_id = ?) AND a.punctuation IS NOT NULL',
-            [assistancesTable, eventsTable, userID]
+            'SELECT ROUND(AVG(a.punctuation), 2) AS average_score FROM assistances AS a WHERE a.event_id IN ' +
+            '(SELECT e.id FROM events AS e WHERE e.owner_id = ?) AND a.punctuation IS NOT NULL',
+            [userID]
         )
 
         return results[0]['average_score']
@@ -116,15 +106,13 @@ class UserDAO {
 
     /*
      * Gets the number of comments written by a user.
-     * @param {Number} id - User ID to be searched.
+     * @param {Number} userID - User ID to be searched.
      * @returns {Promise} - Number of comments written.
     */
     async getUserNumberOfComments(userID) {
-        const assistancesTable = 'assistances'
-
         const [results] = await global.connection.promise().query(
-            'SELECT COUNT(*) AS number_of_comments  FROM ?? AS a WHERE a.user_id = ? AND a.comment IS NOT NULL',
-            [assistancesTable, userID]
+            'SELECT COUNT(*) AS number_of_comments FROM assistances AS a WHERE a.user_id = ? AND a.comment IS NOT NULL',
+            [userID]
         )
 
         return results[0]['number_of_comments']
@@ -132,7 +120,7 @@ class UserDAO {
 
     /*
      * Gets the percentage of users with lower number of comments than the user.
-     * @param {Number} id - User ID to be searched.
+     * @param {Number} userID - User ID to be searched.
      * @returns {Promise} - Percentage of users with lower number of comments.
     */
     async getUserPercentageCommentersBelow(userID) {
@@ -163,7 +151,6 @@ class UserDAO {
         
         return Math.round((percentage + Number.EPSILON) * 100) / 100
     }
-
 }
 
 module.exports = UserDAO
