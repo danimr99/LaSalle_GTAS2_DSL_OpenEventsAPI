@@ -12,9 +12,11 @@ class AssistanceDAO {
      * Creates a new assistance to the database.
      * @param {Number} userID - The ID of the user who is assisting.
      * @param {Number} eventID - The ID of the event the user is assisting.
+     * @returns {Promise} comment - The comment of the user for the event.
     */
     async createAssistance(userID, eventID) {
-        const existsAssistance = await this.getAssistanceOfUserForEvent(userID, eventID)
+        let existsAssistance = await this.getAssistanceOfUserForEvent(userID, eventID)
+        existsAssistance = existsAssistance[0]
 
         // Check if user is already assisting to the event
         if (!existsAssistance) { 

@@ -66,7 +66,7 @@ class UserDAO {
     */
     async searchUsers(search) {
         const [results] = await global.connection.promise().query(
-            'SELECT * FROM ?? WHERE name LIKE CONCAT(\'%\', ?, \'%\') ' + 
+            'SELECT * FROM ?? WHERE name LIKE CONCAT(\'%\', ?, \'%\') ' +
             'OR last_name LIKE CONCAT(\'%\', ?, \'%\') OR email LIKE CONCAT(\'%\', ?, \'%\')',
             [this.#table, search, search, search]
         )
@@ -95,6 +95,75 @@ class UserDAO {
             [this.#table, id]
         )
     }
+
+    /*
+     * Gets the average score given by assistants of finished events created by a user.
+     * @param {Number} id - User ID to be searched.
+     * @returns {Promise} - Average score.
+    */
+    async getUserAverageScore(userID) {
+        const eventsTable = 'events'
+        const assistancesTable = 'assistances'
+
+        const [results] = await global.connection.promise().query(
+            'SELECT ROUND(AVG(a.punctuation), 2) AS average_score FROM ?? AS a WHERE a.event_id IN ' +
+            '(SELECT DISTINCT e.id FROM ?? AS e WHERE e.owner_id = ?) AND a.punctuation IS NOT NULL',
+            [assistancesTable, eventsTable, userID]
+        )
+
+        return results[0]['average_score']
+    }
+
+    /*
+     * Gets the number of comments written by a user.
+     * @param {Number} id - User ID to be searched.
+     * @returns {Promise} - Number of comments written.
+    */
+    async getUserNumberOfComments(userID) {
+        const assistancesTable = 'assistances'
+
+        const [results] = await global.connection.promise().query(
+            'SELECT COUNT(*) AS number_of_comments  FROM ?? AS a WHERE a.user_id = ? AND a.comment IS NOT NULL',
+            [assistancesTable, userID]
+        )
+
+        return results[0]['number_of_comments']
+    }
+
+    /*
+     * Gets the percentage of users with lower number of comments than the user.
+     * @param {Number} id - User ID to be searched.
+     * @returns {Promise} - Percentage of users with lower number of comments.
+    */
+    async getUserPercentageCommentersBelow(userID) {
+        let numberOfCommenterBelow = 0
+
+        // Get all users
+        const allUsers = await this.getAllUsers()
+        
+        // Get number of comments of the user
+        let userCommentsCount = await this.getUserNumberOfComments(userID)
+
+        // Iterate through all users
+        for (const user of allUsers) {
+            // Check if user is not the user itself
+            if (user.id !== userID) {
+                // Get number of comments of the user
+                let numberOtherUserComments = await this.getUserNumberOfComments(user.id)
+
+                // Check if number of comments is lower than the user
+                if (userCommentsCount > numberOtherUserComments) {
+                    numberOfCommenterBelow++
+                }
+            }
+        }
+
+        // Calculate percentage
+        const percentage = (numberOfCommenterBelow * 100) / allUsers.length
+        
+        return Math.round((percentage + Number.EPSILON) * 100) / 100
+    }
+
 }
 
 module.exports = UserDAO

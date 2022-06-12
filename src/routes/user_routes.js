@@ -356,6 +356,84 @@ router.get('/:userID', authenticateUser, async (req, res, next) => {
  * Endpoint: "/users/{user_id}/statistics"
 */
 // TODO Endpoint: @GET "/users/{user_id}/statistics"
+router.get('/:userID/statistics', authenticateUser, async (req, res, next) => {
+    // Get user ID from the URL path sent as parameter
+    const { userID } = req.params
+
+    // Set received data to error stacktrace
+    let stacktrace = {
+        '_original': {
+            'user_id': userID
+        }
+    }
+
+    // Check if user ID is a number
+    if (!validateNumber(userID)) {
+        stacktrace['error'] = {
+            'reason': 'User ID is not a number'
+        }
+
+        return next(new ErrorAPI(
+            'Invalid user ID',
+            HttpStatusCodes.BAD_REQUEST,
+            stacktrace
+        ))
+    }
+
+    // Get user by ID from database
+    let user
+
+    try {
+        user = await userDAO.getUserByID(userID)
+        user = user[0]
+    } catch (error) {
+        // Handle error on get user by ID from database
+        stacktrace['sql_error'] = error
+
+        return next(new ErrorAPI(
+            'An error has occurred while fetching a user by ID from the database',
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+
+    // Check if exists a user matching the ID
+    if (!user) {
+        stacktrace['invalid_user_id'] = userID
+
+        return next(new ErrorAPI(
+            `User with ID ${userID} does not exist or was not found`,
+            HttpStatusCodes.NOT_FOUND,
+            stacktrace
+        ))
+    }
+
+    // Get user statistics from database
+    let statistics
+
+    try {
+        statistics = {
+            'average_score': await userDAO.getUserAverageScore(userID),
+            'number_of_comments': await userDAO.getUserNumberOfComments(userID),
+            'percentage_commenters_below': await userDAO.getUserPercentageCommentersBelow(userID)
+        }
+
+        console.log(statistics)
+    } catch (error) {
+        // Handle error on get user statistics from database
+        stacktrace['sql_error'] = error
+        console.log(error)
+
+        return next(new ErrorAPI(
+            'An error has occurred while fetching user statistics from the database',
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+
+    // Send response
+    res.status(HttpStatusCodes.OK).json(statistics)
+})
 
 /*
  * Edits specified fields of the authenticated user.

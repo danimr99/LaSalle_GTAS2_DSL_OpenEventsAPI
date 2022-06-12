@@ -27,7 +27,7 @@ const ErrorAPI = require('../errors/error_api')
 const { authenticateUser } = require('../utils/authenticator')
 
 // Import custom data validators
-const { validateObject, validateDateTimeString, validateNumber } = require('../utils/validator')
+const { validateObject, validateDateTimeString, validateNumber, validatePunctuation } = require('../utils/validator')
 
 
 /*
@@ -645,6 +645,226 @@ router.get('/:eventID/assistances/:userID', authenticateUser, async (req, res, n
 
         return next(new ErrorAPI(
             'An error has occurred while fetching event assistances from the database',
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+
+    // Send response
+    res.status(HttpStatusCodes.OK).json(assistance)
+})
+
+/*
+ * Creates assistance of authenticated user for event with matching ID.
+ * HTTP Method: GET
+ * Endpoint: "/events/{event_id}/assistances"
+*/
+router.post('/:eventID/assistances', authenticateUser, async (req, res, next) => {
+    // Get event ID from the URL path sent as parameter
+    const { eventID } = req.params
+
+    // Get user ID from the authenticated user
+    const { USER_ID } = req
+
+    // Set received data to error stacktrace
+    let stacktrace = {
+        '_original': {
+            'user_id': USER_ID,
+            'event_id': eventID
+        }
+    }
+
+    // Check if event ID is a number
+    if (!validateNumber(eventID)) {
+        stacktrace['error'] = {
+            'reason': 'Event ID is not a number'
+        }
+
+        return next(new ErrorAPI(
+            'Invalid event ID',
+            HttpStatusCodes.BAD_REQUEST,
+            stacktrace
+        ))
+    }
+
+    // Get event matching ID if exists
+    let event
+
+    try {
+        event = await eventDAO.getEventByID(eventID)
+        event = event[0]
+    } catch (error) {
+        // Handle error on fetch event by id from database
+        stacktrace['sql_error'] = error
+
+        return next(new ErrorAPI(
+            'An error has occurred while fetching an event by ID from the database',
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+
+    // Check if exists event matching ID
+    if (!event) {
+        return next(new ErrorAPI(
+            'Event does not exist or was not found',
+            HttpStatusCodes.NOT_FOUND,
+            stacktrace
+        ))
+    }
+
+    // Check if user is the owner of the event
+    if(event.owner_id === USER_ID) {
+        return next(new ErrorAPI(
+            'User is the owner of the event',
+            HttpStatusCodes.FORBIDDEN,
+            stacktrace
+        ))
+    }
+
+    // Create assistance
+    let assistance
+
+    try {
+        assistance = await assistanceDAO.createAssistance(USER_ID, eventID)
+    } catch (error) {
+        // Handle error on create assistance in database
+        stacktrace['sql_error'] = error
+
+        return next(new ErrorAPI(
+            'An error has occurred while creating an assistance in the database',
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+
+    // Send response
+    res.status(HttpStatusCodes.OK).json(assistance)
+})
+
+/*
+ * Edits assistance of authenticated user for the event with matching ID.
+ * HTTP Method: PUT
+ * Endpoint: "/events/{event_id}/assistances"
+*/
+router.put('/:eventID/assistances', authenticateUser, async (req, res, next) => {
+    // Get event ID from the URL path sent as parameter
+    const { eventID } = req.params
+    
+    // Get user ID from the authenticated user
+    const { USER_ID } = req
+
+    // Set received data to error stacktrace
+    let stacktrace = {
+        '_original': {
+            'user_id': USER_ID,
+            'event_id': eventID
+        }
+    }
+
+    // Check if event ID is a number
+    if (!validateNumber(eventID)) {
+        stacktrace['error'] = {
+            'reason': 'Event ID is not a number'
+        }
+
+        return next(new ErrorAPI(
+            'Invalid event ID',
+            HttpStatusCodes.BAD_REQUEST,
+            stacktrace
+        ))
+    }
+
+    // Get event matching ID if exists
+    let event
+
+    try {
+        event = await eventDAO.getEventByID(eventID)
+        event = event[0]
+    } catch (error) {
+        // Handle error on fetch event by id from database
+        stacktrace['sql_error'] = error
+
+        return next(new ErrorAPI(
+            'An error has occurred while fetching an event by ID from the database',
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+
+    // Check if exists event matching ID
+    if (!event) {
+        return next(new ErrorAPI(
+            'Event does not exist or was not found',
+            HttpStatusCodes.NOT_FOUND,
+            stacktrace
+        ))
+    }
+
+    // Check if event is finished
+    if(event.eventEnd_date > new Date()) {
+        return next(new ErrorAPI(
+            'Event is not finished yet',
+            HttpStatusCodes.FORBIDDEN,
+            stacktrace
+        ))
+    }
+
+    // Get assistance matching ID if exists
+    let assistance
+
+    try {
+        assistance = await assistanceDAO.getUserEventAssistance(eventID, USER_ID)
+        assistance = assistance[0]
+    } catch (error) {
+        // Handle error on fetch assistance by id from database
+        stacktrace['sql_error'] = error
+
+        return next(new ErrorAPI(
+            'An error has occurred while fetching an assistance by ID from the database',
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+
+    // Check if exists assistance matching ID
+    if (!assistance) {
+        return next(new ErrorAPI(
+            'Assistance does not exist or was not found',
+            HttpStatusCodes.NOT_FOUND,
+            stacktrace
+        ))
+    }
+
+    // Update user depending on the fields received
+    if (req.body.punctuation) {
+        if(!validatePunctuation(req.body.punctuation)) {
+            stacktrace['error'] = {
+                'reason': 'Punctuation is not a number between 0 and 10'
+            }
+
+            return next(new ErrorAPI(
+                'Invalid punctuation',
+                HttpStatusCodes.BAD_REQUEST,
+                stacktrace
+            ))
+        }
+
+        // Set new punctuation
+        assistance.punctuation = req.body.punctuation
+    }
+
+    if(req.body.comment) assistance.comment = req.body.comment
+
+    // Update assistance
+    try {
+        assistance = await assistanceDAO.editAssistance(assistance)
+    } catch (error) {
+        // Handle error on update assistance in database
+        stacktrace['sql_error'] = error
+        
+        return next(new ErrorAPI(
+            'An error has occurred while updating an assistance in the database',
             HttpStatusCodes.INTERNAL_SERVER_ERROR,
             stacktrace
         ))

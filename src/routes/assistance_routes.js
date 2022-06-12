@@ -30,10 +30,9 @@ const { validateNumber, validatePunctuation } = require('../utils/validator')
 /*
  * Creates an assistance of the authenticated user for event with matching ID.
  * HTTP Method: POST
- * Endpoint: "/assistances/{event_id}"
+ * Endpoint: "/assistances/{user_id}/{event_id}"
 */
-// FIXME - Remove from assistances and move it to /events/{event_id}/assistances
-router.post('/:eventID', authenticateUser, async (req, res, next) => {
+router.post('/:userID/:eventID', authenticateUser, async (req, res, next) => {
     // Get event ID from the URL path sent as parameter
     const { eventID } = req.params
 
@@ -231,21 +230,31 @@ router.get('/:userID/:eventID', authenticateUser, async (req, res, next) => {
 /*
  * Edits assistance of user with matching id for the event with matching ID.
  * HTTP Method: PUT
- * Endpoint: "/assistances/{event_id}"
+ * Endpoint: "/assistances/{user_id}/{event_id}"
 */
-router.put('/:eventID', authenticateUser, async (req, res, next) => {
+router.put('/:userID/:eventID', authenticateUser, async (req, res, next) => {
     // Get event ID from the URL path sent as parameter
-    const { eventID } = req.params
-
-    // Get user ID from the authentication token
-    const { USER_ID } = req
+    const { userID, eventID } = req.params
 
     // Set received data to error stacktrace
     let stacktrace = {
         '_original': {
-            'user_id': USER_ID,
+            'user_id': userID,
             'event_id': eventID
         }
+    }
+
+    // Check if user ID is a number
+    if (!validateNumber(userID)) {
+        stacktrace['error'] = {
+            'reason': 'User ID is not a number'
+        }
+        
+        return next(new ErrorAPI(
+            'Invalid user ID',
+            HttpStatusCodes.BAD_REQUEST,
+            stacktrace
+        ))
     }
 
     // Check if event ID is a number
@@ -261,11 +270,37 @@ router.put('/:eventID', authenticateUser, async (req, res, next) => {
         ))
     }
 
+    // Check if exists user with matching ID
+    let user
+
+    try {
+        user = await userDAO.getUserByID(userID)
+        user = user[0]
+
+        if (!user) {
+            return next(new ErrorAPI(
+                'User does not exist or was not found',
+                HttpStatusCodes.NOT_FOUND,
+                stacktrace
+            ))       
+        }
+    } catch (error) {
+        // Handle error on get user by id from database
+        stacktrace['sql_error'] = error
+        
+        return next(new ErrorAPI(
+            'An error has occurred while fetching a user by ID from the database',
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+
     // Check if exists event with matching ID
     let event
 
     try {
         event = await eventDAO.getEventByID(eventID)
+        event = event[0]
 
         if (!event) {
             return next(new ErrorAPI(
@@ -289,7 +324,8 @@ router.put('/:eventID', authenticateUser, async (req, res, next) => {
     let assistance
 
     try {
-        assistance = await assistanceDAO.getAssistanceOfUserForEvent(USER_ID, eventID)
+        assistance = await assistanceDAO.getAssistanceOfUserForEvent(userID, eventID)
+        assistance = assistance[0]
 
         if (!assistance) {
             return next(new ErrorAPI(
@@ -368,8 +404,7 @@ router.put('/:eventID', authenticateUser, async (req, res, next) => {
 })
 
 /*
- * Deletes assistance of a user matching the ID for the event with matching ID if the owner 
- * of the event is the authenticated user.
+ * Deletes assistance of a user matching the ID for the event with matching ID.
  * HTTP Method: DELETE
  * Endpoint: "/assistances/{user_id}/{event_id}"
 */
@@ -422,15 +457,6 @@ router.delete('/:userID/:eventID', authenticateUser, async (req, res, next) => {
         return next(new ErrorAPI(
             'An error has occurred while fetching an event by ID from the database',
             HttpStatusCodes.INTERNAL_SERVER_ERROR,
-            stacktrace
-        ))
-    }
-
-    // Check if authenticated user is the owner of the event with matching ID
-    if (USER_ID !== event.owner_id) {
-        return next(new ErrorAPI(
-            'Authenticated user is not the owner of the event',
-            HttpStatusCodes.UNAUTHORIZED,
             stacktrace
         ))
     }
