@@ -6,15 +6,15 @@ const router = express.Router()
 const HttpStatusCodes = require('../models/http_status_codes')
 
 // Import EventDAO and create an instance
-const EventDAO = require('../dao/event_dao')
+const EventDAO = require('../dao/events_dao')
 const eventDAO = new EventDAO()
 
 // Import AssistanceDAO and create an instance
-const UserDAO = require('../dao/user_dao')
+const UserDAO = require('../dao/users_dao')
 const userDAO = new UserDAO()
 
 // Import AssistanceDAO and create an instance
-const AssistanceDAO = require('../dao/assistance_dao')
+const AssistanceDAO = require('../dao/assistances_dao')
 const assistanceDAO = new AssistanceDAO()
 
 // Import custom date time handler

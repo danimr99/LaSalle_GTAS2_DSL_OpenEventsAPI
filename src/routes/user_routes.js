@@ -6,15 +6,15 @@ const router = express.Router()
 const HttpStatusCodes = require('../models/http_status_codes')
 
 // Import UserDAO and create an instance
-const UserDAO = require('../dao/user_dao')
+const UserDAO = require('../dao/users_dao')
 const userDAO = new UserDAO()
 
 // Import EventDAO and create an instance
-const EventDAO = require('../dao/event_dao')
+const EventDAO = require('../dao/events_dao')
 const eventDAO = new EventDAO()
 
 // Import FriendDAO and create an instance
-const FriendDAO = require('../dao/friend_dao')
+const FriendDAO = require('../dao/friends_dao')
 const friendDAO = new FriendDAO()
 
 // Import custom error 

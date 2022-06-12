@@ -5,7 +5,7 @@ const httpStatusCodes = require('../models/http_status_codes')
 const jwt = require('jsonwebtoken')
 
 // Import UserDAO and create an instance of it
-const UserDAO = require('../dao/user_dao')
+const UserDAO = require('../dao/users_dao')
 const userDAO = new UserDAO()
 
 // Set error to throw for unauthenticated users

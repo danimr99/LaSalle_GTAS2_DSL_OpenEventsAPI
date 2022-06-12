@@ -6,7 +6,7 @@ const router = express.Router()
 const HttpStatusCodes = require('../models/http_status_codes')
 
 // Import EventDAO and create an instance
-const MessageDAO = require('../dao/message_dao')
+const MessageDAO = require('../dao/messages_dao')
 const messageDAO = new MessageDAO()
 
 // Import custom date time handler
