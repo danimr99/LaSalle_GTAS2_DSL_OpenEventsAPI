@@ -30,11 +30,11 @@ const app = express()
 const port = 3000
 
 // Import custom routes
-const userRoutes = require('./routes/user_routes')
-const eventRoutes = require('./routes/event_routes')
-const assistanceRoutes = require('./routes/assistance_routes')
-const messageRoutes = require('./routes/message_routes')
-const friendRoutes = require('./routes/friend_routes')
+const userRoutes = require('./routes/users_routes')
+const eventRoutes = require('./routes/events_routes')
+const assistanceRoutes = require('./routes/assistances_routes')
+const messageRoutes = require('./routes/messages_routes')
+const friendRoutes = require('./routes/friends_routes')
 
 // Custom error and error handler
 const ErrorAPI = require('./errors/error_api')

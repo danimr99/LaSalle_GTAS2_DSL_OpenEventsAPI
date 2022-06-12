@@ -20,9 +20,11 @@ class EventDAO {
      * @returns {Promise} - Array of events
     */
     async getAllEvents() {
-        return await global.connection.promise().query(
+        const [results] = await global.connection.promise().query(
             'SELECT * FROM events'
         )
+
+        return results
     }
 
     /*
@@ -31,10 +33,12 @@ class EventDAO {
      * @returns {Promise} - Event
     */
     async getEventByID(eventID) {
-        return await global.connection.promise().query(
+        const [results] = await global.connection.promise().query(
             'SELECT * FROM events WHERE id = ?',
             [eventID]
         )
+
+        return results
     }
 
     /*
@@ -67,10 +71,12 @@ class EventDAO {
      * returns {Promise} - Array of events
     */
     async getEventsCreatedByUser(userID) {
-        return await global.connection.promise().query(
+        const [results] = await global.connection.promise().query(
             'SELECT * FROM events WHERE owner_id = ?',
             [userID]
         )
+
+        return results
     }
 
     /*
@@ -79,10 +85,12 @@ class EventDAO {
      * returns {Promise} - Array of events
     */
     async getFutureEventsCreatedByUser(userID) {
-        return await global.connection.promise().query(
+        const [results] = await global.connection.promise().query(
             'SELECT * FROM events WHERE owner_id = ? AND eventStart_date > NOW()',
             [userID]
         )
+
+        return results
     }
 
     /*
@@ -91,10 +99,12 @@ class EventDAO {
      * returns {Promise} - Array of events
     */
     async getFinishedEventsCreatedByUser(userID) {
-        return await global.connection.promise().query(
+        const [results] = await global.connection.promise().query(
             'SELECT * FROM events WHERE owner_id = ? AND eventEnd_date < NOW()',
             [userID]
         )
+
+        return results
     }
 
     /*
@@ -103,10 +113,12 @@ class EventDAO {
      * returns {Promise} - Array of events
     */
     async getActiveEventsCreatedByUser(userID) {
-        return await global.connection.promise().query(
+        const [results] = await global.connection.promise().query(
             'SELECT * FROM events WHERE owner_id = ? AND eventStart_date < NOW() AND eventEnd_date > NOW()',
             [userID]
         )
+
+        return results
     }
 
     /*
@@ -115,11 +127,13 @@ class EventDAO {
      * returns {Promise} - Array of events with the user rating.
     */
     async getAssistancesByUser(userID) {
-        return await global.connection.promise().query(
+        const [results] = await global.connection.promise().query(
             'SELECT e.*, a.punctuation, a.comment FROM events AS e INNER JOIN assistances AS a ON e.id = a.event_id ' +
             'WHERE a.user_id = ?',
             [userID]
         )
+
+        return results
     }
 
     /*
@@ -128,11 +142,13 @@ class EventDAO {
      * returns {Promise} - Array of events with the user rating.
     */
     async getFutureAssistancesByUser(userID) {
-        return await global.connection.promise().query(
+        const [results] = await global.connection.promise().query(
             'SELECT e.*, a.punctuation, a.comment FROM events AS e INNER JOIN assistances AS a ON e.id = a.event_id ' +
             'WHERE a.user_id = ? AND e.eventStart_date > NOW()',
             [userID]
         )
+
+        return results
     }
 
     /*
@@ -141,11 +157,13 @@ class EventDAO {
      * returns {Promise} - Array of events with the user rating.
     */
     async getFinishedAssistancesByUser(userID) {
-        return await global.connection.promise().query(
+        const [results] = await global.connection.promise().query(
             'SELECT e.*, a.punctuation, a.comment FROM events AS e INNER JOIN assistances AS a ON e.id = a.event_id ' +
             'WHERE a.user_id = ? AND e.eventEnd_date < NOW()',
             [userID]
         )
+
+        return results
     }
 
     /*

@@ -18,12 +18,14 @@ class MessageDAO {
      * @returns {Promise} - An array of users.
     */
     async getUserContacts(authenticatedUserID) {
-        return await global.connection.promise().query(
+        const [results] = await global.connection.promise().query(
             'SELECT * FROM users AS u ' +
             'WHERE u.id IN (SELECT DISTINCT m.user_id_send FROM messages AS m ' + 
             'WHERE m.user_id_received = ?)',
             [authenticatedUserID]
         )
+
+        return results
     }
 
     /*
@@ -33,11 +35,13 @@ class MessageDAO {
      * @returns {Promise} - An array of messages.
     */
     async getMessagesExchangedBetweenUsers(userID, externalUserID) {
-        return await global.connection.promise().query(
+        const [results] = await global.connection.promise().query(
             'SELECT * FROM messages WHERE (user_id_send = ? OR user_id_received = ?) ' + 
             'AND (user_id_send = ? OR user_id_received = ?)',
             [userID, userID, externalUserID, externalUserID]
         )
+
+        return results
     }
 }
 

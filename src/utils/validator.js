@@ -2,11 +2,11 @@
 const emailValidator = require('@sideway/address')
 
 // Set password minimum length
-const passwordMinLength = 8
+const PASSWORD_MIN_LENGTH = 8
 
 // Set event punctuation minimum value
-const eventPunctuationMin = 0
-const eventPunctuationMax = 10
+const EVENT_PUNCTUATION_MIN = 0
+const EVENT_PUNCTUATION_MAX = 10
 
 
 /*
@@ -41,7 +41,7 @@ function validateEmail(email) {
  * @returns {Boolean} - True if the password is valid, false otherwise.
 */
 function validatePassword(password) {
-    return password.length >= passwordMinLength
+    return password.length >= PASSWORD_MIN_LENGTH
 }
 
 /*
@@ -72,7 +72,7 @@ function validatePunctuation(punctuation) {
         return false
     }
 
-    return punctuation >= eventPunctuationMin && punctuation <= eventPunctuationMax
+    return punctuation >= EVENT_PUNCTUATION_MIN && punctuation <= EVENT_PUNCTUATION_MAX
 }
 
 module.exports = { 
@@ -82,5 +82,5 @@ module.exports = {
     validateDateTimeString,
     validateNumber,
     validatePunctuation,
-    passwordMinLength 
+    PASSWORD_MIN_LENGTH 
 }

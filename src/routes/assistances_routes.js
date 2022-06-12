@@ -78,6 +78,7 @@ router.post('/:userID/:eventID', authenticateUser, async (req, res, next) => {
 
     try {
         event = await eventDAO.getEventByID(eventID)
+        event = event[0]
 
         if (!event) {
             return next(new ErrorAPI(
@@ -165,6 +166,7 @@ router.get('/:userID/:eventID', authenticateUser, async (req, res, next) => {
 
     try {
         user = await userDAO.getUserByID(userID)
+        user = user[0]
 
         if (!user) {
             return next(new ErrorAPI(
@@ -189,6 +191,7 @@ router.get('/:userID/:eventID', authenticateUser, async (req, res, next) => {
 
     try {
         event = await eventDAO.getEventByID(eventID)
+        event = event[0]
 
         if (!event) {
             return next(new ErrorAPI(
@@ -213,6 +216,7 @@ router.get('/:userID/:eventID', authenticateUser, async (req, res, next) => {
 
     try {
         assistance = await assistanceDAO.getAssistanceOfUserForEvent(userID, eventID)
+        assistance = assistance[0]
     } catch (error) {
         stacktrace['sql_error'] = error
 
@@ -442,6 +446,7 @@ router.delete('/:userID/:eventID', authenticateUser, async (req, res, next) => {
 
     try {
         event = await eventDAO.getEventByID(eventID)
+        event = event[0]
 
         if (!event) {
             return next(new ErrorAPI(
@@ -466,6 +471,7 @@ router.delete('/:userID/:eventID', authenticateUser, async (req, res, next) => {
 
     try {
         assistance = await assistanceDAO.getAssistanceOfUserForEvent(userID, eventID)
+        assistance = assistance[0]
 
         if (!assistance) {
             return next(new ErrorAPI(

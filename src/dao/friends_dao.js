@@ -10,11 +10,13 @@ class FriendDAO {
      * @returns {Promise<Array>} - Array of users
     */
     async getPotentialFriends(userID) {
-        return await global.connection.promise().query(
+        const [results] = await global.connection.promise().query(
             'SELECT * FROM users AS u ' +
             'WHERE u.id IN (SELECT user_id FROM friends AS f WHERE f.user_id_friend = ? AND f.status = ?)',
             [userID, FriendRequestStatus.PENDING]
         )
+
+        return results
     }
 
     /*
@@ -23,12 +25,14 @@ class FriendDAO {
      * @returns {Promise<Array>} - Array of users
     */
     async getFriends(userID) {
-        return await global.connection.promise().query(
+        const [results] = await global.connection.promise().query(
             'SELECT * FROM users AS u ' +
             'WHERE u.id = (SELECT user_id FROM friends AS f WHERE f.user_id_friend = ? AND f.status = ?) ' +
             'OR u.id = (SELECT user_id_friend FROM friends AS f2 WHERE f2.user_id = ? AND f2.status = ?)',
             [userID, FriendRequestStatus.ACCEPTED, userID, FriendRequestStatus.ACCEPTED]
         )
+
+        return results
     }
 
     /*
@@ -38,10 +42,12 @@ class FriendDAO {
      * @returns {Promise} - Friend request between two users.
     */
     async #checkMutualFriendRequest(userID, externalUserID) {
-        return await global.connection.promise().query(
+        const [results] = await global.connection.promise().query(
             'SELECT * FROM friends WHERE (user_id = ? AND user_id_friend = ?) OR (user_id = ? AND user_id_friend = ?)',
             [userID, externalUserID, externalUserID, userID]
         )
+
+        return results
     }
 
     /*
@@ -70,6 +76,7 @@ class FriendDAO {
 
         // Get mutual friend request
         let existsFriendRequest = await this.#checkMutualFriendRequest(userID, externalUserID)
+        existsFriendRequest = existsFriendRequest[0]
 
         // Check if exists a mutual friend request
         if (existsFriendRequest) {
@@ -115,6 +122,7 @@ class FriendDAO {
     async acceptFriendRequest(userID, externalUserID) {
         // Get mutual friend request
         let existsFriendRequest = await this.#checkMutualFriendRequest(userID, externalUserID)
+        existsFriendRequest = existsFriendRequest[0]
 
         // Check if exists a mutual friend request
         if (existsFriendRequest) {
@@ -154,6 +162,7 @@ class FriendDAO {
     async deleteFriendRequestOrFriendship(userID, externalUserID) {
         // Get mutual friend request
         let existsFriendRequest = await this.#checkMutualFriendRequest(userID, externalUserID)
+        existsFriendRequest = existsFriendRequest[0]
 
         // Check if exists a mutual friend request
         if (existsFriendRequest) {

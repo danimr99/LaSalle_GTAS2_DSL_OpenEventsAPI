@@ -21,6 +21,7 @@ const { authenticateUser } = require('../utils/authenticator')
 // Import custom data validators
 const { validateObject, validateNumber } = require('../utils/validator')
 
+
 /*
  * Creates a message.
  * HTTP Method: POST
@@ -138,7 +139,7 @@ router.get('/:userID', authenticateUser, async (req, res, next) => {
     const { USER_ID } = req
 
     // Get external user ID from the URL path sent as parameter
-    const externalUserID = req.params.userID
+    const externalUserID = parseInt(req.params.userID)
 
     // Set received data to error stacktrace
     let stacktrace = {
@@ -156,6 +157,19 @@ router.get('/:userID', authenticateUser, async (req, res, next) => {
 
         return next(new ErrorAPI(
             'Invalid external user ID',
+            HttpStatusCodes.BAD_REQUEST,
+            stacktrace
+        ))
+    }
+
+    // Check if external user ID is not the same as the authenticated user
+    if(USER_ID === externalUserID) {
+        stacktrace['error'] = {
+            'reason': 'You cannot get messages with yourself'
+        }
+
+        return next(new ErrorAPI(
+            'You cannot get messages with yourself',
             HttpStatusCodes.BAD_REQUEST,
             stacktrace
         ))

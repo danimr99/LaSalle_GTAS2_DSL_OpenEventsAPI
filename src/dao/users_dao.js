@@ -2,11 +2,7 @@
 const { encryptPassword } = require('../utils/cypher')
 
 class UserDAO {
-    #table
-
-    constructor() {
-        this.#table = 'users'
-    }
+    constructor() {}
 
     /*
      * Registers a new user to the database.
@@ -28,10 +24,12 @@ class UserDAO {
      * @returns {Promise} - A user.
     */
     async getUserByEmail(email) {
-        return await global.connection.promise().query(
+        const [results] = await global.connection.promise().query(
             'SELECT * FROM users WHERE email LIKE ?',
             [email]
         )
+
+        return results
     }
 
     /*
@@ -39,7 +37,9 @@ class UserDAO {
      * @returns {Promise} - An array of users.
     */
     async getAllUsers() {
-        return await global.connection.promise().query('SELECT * FROM users')
+        const [results] = await global.connection.promise().query('SELECT * FROM users')
+
+        return results
     }
 
     /*
@@ -48,10 +48,12 @@ class UserDAO {
      * @returns {Promise} - A user.
     */
     async getUserByID(userID) {
-        return await global.connection.promise().query(
+        const [results] = await global.connection.promise().query(
             'SELECT * FROM users WHERE id = ?',
             [userID]
         )
+
+        return results
     }
 
     /*
@@ -60,11 +62,13 @@ class UserDAO {
      * @returns {Promise} - An array of users.
     */
     async searchUsers(search) {
-        return await global.connection.promise().query(
+        const [results] = await global.connection.promise().query(
             'SELECT * FROM users WHERE name LIKE CONCAT(\'%\', ?, \'%\') ' +
             'OR last_name LIKE CONCAT(\'%\', ?, \'%\') OR email LIKE CONCAT(\'%\', ?, \'%\')',
             [search, search, search]
         )
+
+        return results
     }
 
     /*

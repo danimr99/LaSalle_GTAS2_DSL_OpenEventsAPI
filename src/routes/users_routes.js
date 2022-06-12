@@ -26,7 +26,7 @@ const {
     validateEmail,
     validatePassword,
     validateNumber,
-    passwordMinLength
+    PASSWORD_MIN_LENGTH
 } = require('../utils/validator')
 
 // Import custom authenticator
@@ -87,13 +87,14 @@ router.post('/', async (req, res, next) => {
     // Handle password not meeting requirements error
     if (!isPasswordValid) {
         stacktrace['invalid_password'] = {
-            'minimum_password_length': passwordMinLength,
+            'reason': `Password must be at least ${PASSWORD_MIN_LENGTH} characters long`,
+            'minimum_password_length': PASSWORD_MIN_LENGTH,
             'received_password': user.password,
             'received_password_length': user.password.length
         }
 
         return next(new ErrorAPI(
-            `Password must be at least ${passwordMinLength} characters long`,
+            'User has introduced a password that does not meet the requirements',
             HttpStatusCodes.BAD_REQUEST,
             stacktrace
         ))
@@ -106,13 +107,15 @@ router.post('/', async (req, res, next) => {
         userByEmail = userByEmail[0]
 
         if (userByEmail) {
-            stacktrace['invalid_email'] = user.email
+            if(userByEmail.email === user.email) {
+                stacktrace['invalid_email'] = user.email
 
-            return next(new ErrorAPI(
-                'Email address already exists',
-                HttpStatusCodes.BAD_REQUEST,
-                stacktrace
-            ))
+                return next(new ErrorAPI(
+                    'Email address already exists',
+                    HttpStatusCodes.BAD_REQUEST,
+                    stacktrace
+                ))
+            }
         }
     } catch (error) {
         // Handle error on create user to database
@@ -339,7 +342,7 @@ router.get('/:userID', authenticateUser, async (req, res, next) => {
         stacktrace['invalid_user_id'] = userID
 
         return next(new ErrorAPI(
-            `User with ID ${userID} does not exist or was not found`,
+            'User does not exist or was not found',
             HttpStatusCodes.NOT_FOUND,
             stacktrace
         ))
@@ -401,7 +404,7 @@ router.get('/:userID/statistics', authenticateUser, async (req, res, next) => {
         stacktrace['invalid_user_id'] = userID
 
         return next(new ErrorAPI(
-            `User with ID ${userID} does not exist or was not found`,
+            'User does not exist or was not found',
             HttpStatusCodes.NOT_FOUND,
             stacktrace
         ))
@@ -467,7 +470,7 @@ router.put('/', authenticateUser, async (req, res, next) => {
     // Check if user exists
     if (!user) {
         return next(new ErrorAPI(
-            `User with ID ${USER_ID} does not exist or was not found`,
+            'User does not exist or was not found',
             HttpStatusCodes.INTERNAL_SERVER_ERROR,
             stacktrace
         ))
@@ -481,11 +484,11 @@ router.put('/', authenticateUser, async (req, res, next) => {
         // Check if email is valid
         if(!validateEmail(req.body.email)) {
             stacktrace['error'] = {
-                'reason': 'Email is not valid'
+                'reason': 'User has introduced an invalid email',
             }
 
             return next(new ErrorAPI(
-                'Invalid email',
+                'User has introduced an invalid email',
                 HttpStatusCodes.BAD_REQUEST,
                 stacktrace
             ))
@@ -499,11 +502,11 @@ router.put('/', authenticateUser, async (req, res, next) => {
         // Check if password is valid
         if(!validatePassword(req.body.password)) {
             stacktrace['error'] = {
-                'reason': 'Password is not valid'
+                'reason': `Password must be at least ${PASSWORD_MIN_LENGTH} characters long`,
             }
 
             return next(new ErrorAPI(
-                'Invalid password',
+                'User has introduced a password that does not meet the requirements',
                 HttpStatusCodes.BAD_REQUEST,
                 stacktrace
             ))
@@ -560,6 +563,7 @@ router.delete('/', authenticateUser, async (req, res, next) => {
 
     try {
         user = await userDAO.getUserByID(USER_ID)
+        user = user[0]
     } catch (error) {
         // Handle error on get user by ID from database
         stacktrace['sql_error'] = error
@@ -574,7 +578,7 @@ router.delete('/', authenticateUser, async (req, res, next) => {
     // Check if user exists
     if (!user) {
         return next(new ErrorAPI(
-            `User with ID ${USER_ID} does not exist or was not found`,
+            'User does not exist or was not found',
             HttpStatusCodes.INTERNAL_SERVER_ERROR,
             stacktrace
         ))
@@ -598,7 +602,7 @@ router.delete('/', authenticateUser, async (req, res, next) => {
 
     // Send response
     res.status(HttpStatusCodes.OK).json({
-        'message': `User with ID ${USER_ID} was deleted successfully`
+        'message': 'User was deleted successfully'
     })
 })
 
@@ -623,7 +627,7 @@ router.get('/:userID/events', authenticateUser, async (req, res, next) => {
         stacktrace['invalid_user_id'] = userID
 
         return next(new ErrorAPI(
-            `User ID ${userID} is not a number`,
+            'User ID is not a number',
             HttpStatusCodes.BAD_REQUEST,
             stacktrace
         ))
@@ -634,6 +638,7 @@ router.get('/:userID/events', authenticateUser, async (req, res, next) => {
 
     try {
         user = await userDAO.getUserByID(userID)
+        user = user[0]
     } catch (error) {
         // Handle error on get user by ID from database
         stacktrace['sql_error'] = error
@@ -648,7 +653,7 @@ router.get('/:userID/events', authenticateUser, async (req, res, next) => {
     // Check if user exists
     if (!user) {
         return next(new ErrorAPI(
-            `User with ID ${userID} does not exist or was not found`,
+            'User does not exist or was not found',
             HttpStatusCodes.INTERNAL_SERVER_ERROR,
             stacktrace
         ))
@@ -695,7 +700,7 @@ router.get('/:userID/events/future', authenticateUser, async (req, res, next) =>
         stacktrace['invalid_user_id'] = userID
 
         return next(new ErrorAPI(
-            `User ID ${userID} is not a number`,
+            'User ID is not a number',
             HttpStatusCodes.BAD_REQUEST,
             stacktrace
         ))
@@ -706,6 +711,7 @@ router.get('/:userID/events/future', authenticateUser, async (req, res, next) =>
 
     try {
         user = await userDAO.getUserByID(userID)
+        user = user[0]
     } catch (error) {
         // Handle error on get user by ID from database
         stacktrace['sql_error'] = error
@@ -720,7 +726,7 @@ router.get('/:userID/events/future', authenticateUser, async (req, res, next) =>
     // Check if user exists
     if (!user) {
         return next(new ErrorAPI(
-            `User with ID ${userID} does not exist or was not found`,
+            'User does not exist or was not found',
             HttpStatusCodes.INTERNAL_SERVER_ERROR,
             stacktrace
         ))
@@ -767,7 +773,7 @@ router.get('/:userID/events/finished', authenticateUser, async (req, res, next) 
         stacktrace['invalid_user_id'] = userID
 
         return next(new ErrorAPI(
-            `User ID ${userID} is not a number`,
+            'User ID is not a number',
             HttpStatusCodes.BAD_REQUEST,
             stacktrace
         ))
@@ -778,6 +784,7 @@ router.get('/:userID/events/finished', authenticateUser, async (req, res, next) 
 
     try {
         user = await userDAO.getUserByID(userID)
+        user = user[0]
     } catch (error) {
         // Handle error on get user by ID from database
         stacktrace['sql_error'] = error
@@ -792,7 +799,7 @@ router.get('/:userID/events/finished', authenticateUser, async (req, res, next) 
     // Check if user exists
     if (!user) {
         return next(new ErrorAPI(
-            `User with ID ${userID} does not exist or was not found`,
+            'User does not exist or was not found',
             HttpStatusCodes.INTERNAL_SERVER_ERROR,
             stacktrace
         ))
@@ -839,7 +846,7 @@ router.get('/:userID/events/current', authenticateUser, async (req, res, next) =
         stacktrace['invalid_user_id'] = userID
 
         return next(new ErrorAPI(
-            `User ID ${userID} is not a number`,
+            'User ID is not a number',
             HttpStatusCodes.BAD_REQUEST,
             stacktrace
         ))
@@ -850,6 +857,7 @@ router.get('/:userID/events/current', authenticateUser, async (req, res, next) =
 
     try {
         user = await userDAO.getUserByID(userID)
+        user = user[0]
     } catch (error) {
         // Handle error on get user by ID from database
         stacktrace['sql_error'] = error
@@ -864,7 +872,7 @@ router.get('/:userID/events/current', authenticateUser, async (req, res, next) =
     // Check if user exists
     if (!user) {
         return next(new ErrorAPI(
-            `User with ID ${userID} does not exist or was not found`,
+            'User does not exist or was not found',
             HttpStatusCodes.INTERNAL_SERVER_ERROR,
             stacktrace
         ))
@@ -911,7 +919,7 @@ router.get('/:userID/assistances', authenticateUser, async (req, res, next) => {
         stacktrace['invalid_user_id'] = userID
 
         return next(new ErrorAPI(
-            `User ID ${userID} is not a number`,
+            'User ID is not a number',
             HttpStatusCodes.BAD_REQUEST,
             stacktrace
         ))
@@ -922,6 +930,7 @@ router.get('/:userID/assistances', authenticateUser, async (req, res, next) => {
 
     try {
         user = await userDAO.getUserByID(userID)
+        user = user[0]
     }
     catch (error) {
         // Handle error on get user by ID from database
@@ -937,7 +946,7 @@ router.get('/:userID/assistances', authenticateUser, async (req, res, next) => {
     // Check if user exists
     if (!user) {
         return next(new ErrorAPI(
-            `User with ID ${userID} does not exist or was not found`,
+            'User does not exist or was not found',
             HttpStatusCodes.INTERNAL_SERVER_ERROR,
             stacktrace
         ))
@@ -984,7 +993,7 @@ router.get('/:userID/assistances/future', authenticateUser, async (req, res, nex
         stacktrace['invalid_user_id'] = userID
 
         return next(new ErrorAPI(
-            `User ID ${userID} is not a number`,
+            'User ID is not a number',
             HttpStatusCodes.BAD_REQUEST,
             stacktrace
         ))
@@ -995,6 +1004,7 @@ router.get('/:userID/assistances/future', authenticateUser, async (req, res, nex
 
     try {
         user = await userDAO.getUserByID(userID)
+        user = user[0]
     }
     catch (error) {
         // Handle error on get user by ID from database
@@ -1010,7 +1020,7 @@ router.get('/:userID/assistances/future', authenticateUser, async (req, res, nex
     // Check if user exists
     if (!user) {
         return next(new ErrorAPI(
-            `User with ID ${userID} does not exist or was not found`,
+            'User does not exist or was not found',
             HttpStatusCodes.INTERNAL_SERVER_ERROR,
             stacktrace
         ))
@@ -1057,7 +1067,7 @@ router.get('/:userID/assistances/finished', authenticateUser, async (req, res, n
         stacktrace['invalid_user_id'] = userID
 
         return next(new ErrorAPI(
-            `User ID ${userID} is not a number`,
+            'User ID is not a number',
             HttpStatusCodes.BAD_REQUEST,
             stacktrace
         ))
@@ -1068,6 +1078,7 @@ router.get('/:userID/assistances/finished', authenticateUser, async (req, res, n
 
     try {
         user = await userDAO.getUserByID(userID)
+        user = user[0]
     }
     catch (error) {
         // Handle error on get user by ID from database
@@ -1083,7 +1094,7 @@ router.get('/:userID/assistances/finished', authenticateUser, async (req, res, n
     // Check if user exists
     if (!user) {
         return next(new ErrorAPI(
-            `User with ID ${userID} does not exist or was not found`,
+            'User does not exist or was not found',
             HttpStatusCodes.INTERNAL_SERVER_ERROR,
             stacktrace
         ))
@@ -1130,7 +1141,7 @@ router.get('/:userID/friends', authenticateUser, async (req, res, next) => {
         stacktrace['invalid_user_id'] = userID
 
         return next(new ErrorAPI(
-            `User ID ${userID} is not a number`,
+            'User ID is not a number',
             HttpStatusCodes.BAD_REQUEST,
             stacktrace
         ))
@@ -1141,6 +1152,7 @@ router.get('/:userID/friends', authenticateUser, async (req, res, next) => {
 
     try {
         user = await userDAO.getUserByID(userID)
+        user = user[0]
     }
     catch (error) {
         // Handle error on get user by ID from database
@@ -1156,7 +1168,7 @@ router.get('/:userID/friends', authenticateUser, async (req, res, next) => {
     // Check if user exists
     if (!user) {
         return next(new ErrorAPI(
-            `User with ID ${userID} does not exist or was not found`,
+            'User does not exist or was not found',
             HttpStatusCodes.INTERNAL_SERVER_ERROR,
             stacktrace
         ))

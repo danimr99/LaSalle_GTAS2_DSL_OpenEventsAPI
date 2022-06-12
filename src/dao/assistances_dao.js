@@ -34,10 +34,12 @@ class AssistanceDAO {
      * @returns {Promise} - The assistance of the user for the event.
     */
     async getAssistanceOfUserForEvent(userID, eventID) {
-        return await global.connection.promise().query(
+        const [results] = await global.connection.promise().query(
             'SELECT * FROM assistances WHERE user_id = ? AND event_id = ?',
             [userID, eventID]
         )
+
+        return results
     }
 
     /*
@@ -74,13 +76,13 @@ class AssistanceDAO {
      * @returns {Promise} - Array of users with their assistance for the event.
     */
     async getEventAssistances(eventID) {
-        return await global.connection.promise().query(
-            'SELECT u.id, u.name, u.last_name, u.email, a.punctuation, a.comment ' +
-            'FROM users AS u INNER JOIN assistances AS a ON u.id = a.user_id ' +
-            'WHERE u.id IN (SELECT DISTINCT a2.user_id FROM assistances AS a2 ' +
-            'WHERE a2.event_id = ?)',
+        const [results] = await global.connection.promise().query(
+            'SELECT u.id, u.name, u.last_name, u.email, a.punctuation, a.comment  FROM users AS u ' +
+            'INNER JOIN assistances AS a ON u.id = a.user_id WHERE a.event_id = ?',
             [eventID]
         )
+
+        return results
     }
 
     /*
@@ -90,12 +92,12 @@ class AssistanceDAO {
      * @returns {Promise} - User with his/her assistance for the event.
     */
     async getUserEventAssistance(eventID, userID) {
-        return await global.connection.promise().query(
-            'SELECT a.* FROM users AS u INNER JOIN assistances AS a ON u.id = a.user_id ' +
-            'WHERE u.id IN (SELECT DISTINCT a2.user_id FROM assistances AS a2 ' +
-            'WHERE a2.event_id = ? AND a2.user_id = ?)',
-            [eventID, userID]
+        const [results] = await global.connection.promise().query(
+            'SELECT a.* FROM  assistances AS a WHERE a.user_id = ? AND a.event_id = ?',
+            [userID, eventID]
         )
+
+        return results
     }
 }
 

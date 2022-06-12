@@ -113,7 +113,7 @@ router.post('/:userID', authenticateUser, async (req, res, next) => {
     const { USER_ID } = req
 
     // Get external user ID from the URL path sent as parameter
-    const externalUserID = req.params.userID
+    const externalUserID = parseInt(req.params.userID)
 
     // Set received data to error stacktrace
     let stacktrace = {
@@ -141,6 +141,7 @@ router.post('/:userID', authenticateUser, async (req, res, next) => {
 
     try {
         externalUser = await userDAO.getUserByID(externalUserID)
+        externalUser = externalUser[0]
 
         // Check if external user exists
         if (!externalUser) {
@@ -209,7 +210,7 @@ router.put('/:userID', authenticateUser, async (req, res, next) => {
     const { USER_ID } = req
 
     // Get external user ID from the URL path sent as parameter
-    const externalUserID = req.params.userID
+    const externalUserID = parseInt(req.params.userID)
 
     // Set received data to error stacktrace
     let stacktrace = {
@@ -264,7 +265,7 @@ router.delete('/:userID', authenticateUser, async (req, res, next) => {
     const { USER_ID } = req
 
     // Get external user ID from the URL path sent as parameter
-    const externalUserID = req.params.userID
+    const externalUserID = parseInt(req.params.userID)
 
     // Set received data to error stacktrace
     let stacktrace = {

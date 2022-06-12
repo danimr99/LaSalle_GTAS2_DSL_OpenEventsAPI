@@ -279,6 +279,7 @@ router.get('/:eventID', authenticateUser, async (req, res, next) => {
 
     try {
         event = await eventDAO.getEventByID(eventID)
+        event = event[0]
     } catch (error) {
         // Handle error on get event by id from database
         stacktrace['error_sql'] = error
@@ -332,6 +333,7 @@ router.put('/:eventID', authenticateUser, async (req, res, next) => {
 
     try {
         event = await eventDAO.getEventByID(eventID)
+        event = event[0]
     } catch (error) {
         // Handle error on fetching event by ID from the database
         stacktrace['sql_error'] = error
@@ -437,6 +439,7 @@ router.delete('/:eventID', authenticateUser, async (req, res, next) => {
 
     try {
         event = await eventDAO.getEventByID(eventID)
+        event = event[0]
     } catch (error) {
         // Handle error on fetch event by id from database
         stacktrace['sql_error'] = error
@@ -487,7 +490,7 @@ router.delete('/:eventID', authenticateUser, async (req, res, next) => {
 
     // Send response
     res.status(HttpStatusCodes.OK).json({
-        'message': `Event with ID ${eventID} has been deleted successfully`
+        'message': 'Event has been deleted successfully'
     })
 })
 
@@ -525,6 +528,7 @@ router.get('/:eventID/assistances', authenticateUser, async (req, res, next) => 
 
     try {
         event = await eventDAO.getEventByID(eventID)
+        event = event[0]
     } catch (error) {
         // Handle error on fetch event by id from database
         stacktrace['sql_error'] = error
@@ -553,8 +557,6 @@ router.get('/:eventID/assistances', authenticateUser, async (req, res, next) => 
     } catch (error) {
         // Handle error on fetch event assistances from database
         stacktrace['sql_error'] = error
-
-        console.log(error)
 
         return next(new ErrorAPI(
             'An error has occurred while fetching event assistances from the database',
@@ -615,6 +617,7 @@ router.get('/:eventID/assistances/:userID', authenticateUser, async (req, res, n
 
     try {
         event = await eventDAO.getEventByID(eventID)
+        event = event[0]
     } catch (error) {
         // Handle error on fetch event by id from database
         stacktrace['sql_error'] = error
@@ -640,6 +643,7 @@ router.get('/:eventID/assistances/:userID', authenticateUser, async (req, res, n
 
     try {
         user = await userDAO.getUserByID(userID)
+        event = event[0]
     } catch (error) {
         // Handle error on fetch user by id from database
         stacktrace['sql_error'] = error
@@ -660,16 +664,15 @@ router.get('/:eventID/assistances/:userID', authenticateUser, async (req, res, n
         ))
     }
 
-    // Get all assistances for event matching ID
+    // Get assistance of the user ID for event matching ID
     let assistance
 
     try {
         assistance = await assistanceDAO.getUserEventAssistance(eventID, userID)
+        assistance = assistance[0]
     } catch (error) {
         // Handle error on fetch event assistances from database
         stacktrace['sql_error'] = error
-
-        console.log(error)
 
         return next(new ErrorAPI(
             'An error has occurred while fetching event assistances from the database',
@@ -838,7 +841,7 @@ router.put('/:eventID/assistances', authenticateUser, async (req, res, next) => 
         ))
     }
 
-    // Get assistance matching ID if exists
+    // Get assistance for the user ID for event matching ID
     let assistance
 
     try {
@@ -940,6 +943,7 @@ router.delete('/:eventID/assistances', authenticateUser, async (req, res, next) 
 
     try {
         event = await eventDAO.getEventByID(eventID)
+        event = event[0]
 
         if (!event) {
             return next(new ErrorAPI(
@@ -964,6 +968,7 @@ router.delete('/:eventID/assistances', authenticateUser, async (req, res, next) 
 
     try {
         assistance = await assistanceDAO.getAssistanceOfUserForEvent(USER_ID, eventID)
+        assistance = assistance[0]
 
         if (!assistance) {
             return next(new ErrorAPI(
