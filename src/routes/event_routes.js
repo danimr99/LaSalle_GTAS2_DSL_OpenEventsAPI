@@ -218,6 +218,34 @@ router.get('/search', authenticateUser, async (req, res, next) => {
 })
 
 /*
+ * Gets all future events in descending order based on the average score of the creator's old events.
+ * HTTP Method: GET
+ * Endpoint: "/events/{event_id}"
+*/
+router.get('/best', authenticateUser, async (_req, res, next) => {
+    // Get all events from database
+    let events
+
+    try {
+        events = await eventDAO.getBestEvents()
+    } catch (error) {
+        // Handle error while fetching all events from database
+        let stacktrace = {
+            'error_sql': error
+        }
+
+        return next(new ErrorAPI(
+            'An error has occurred while fetching all events from the database',
+            HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            stacktrace
+        ))
+    }
+    
+    // Send response
+    res.status(HttpStatusCodes.OK).json(events)
+})
+
+/*
  * Gets event by ID.
  * HTTP Method: GET
  * Endpoint: "/events/{event_id}"

@@ -181,6 +181,41 @@ class EventDAO {
 
         return results
     }
+
+    /*
+     * Gets all the future events ordered by descending owner average score from the database.
+     * returns {Promise} - Array of events.
+    */
+    async getBestEvents() {
+        let bestEvents = []
+
+        // Get average score for each event owner
+        const [ownersAverageScores] = await global.connection.promise().query(
+            'SELECT (AVG(a.punctuation)) AS average_score, e.owner_id FROM assistances AS a, events AS e, users AS u ' +
+            'WHERE e.owner_id = u.id AND e.id = a.event_id AND e.eventEnd_Date < NOW() GROUP BY e.owner_id ' + 
+            'ORDER BY average_score DESC'
+        )
+
+        // Get all events with the highest average score
+        const [futureEvents] = await global.connection.promise().query(
+            'SELECT * FROM ?? WHERE eventEnd_date > NOW()',
+            [this.#table]
+        )
+
+        // Iterate through all future events
+        futureEvents.forEach(event => {
+            // Iterate through all owners average scores
+            ownersAverageScores.forEach(owner => {
+                // If the owner has the highest average score
+                if (event.owner_id == owner.owner_id) {
+                    // Add the event to the best events array
+                    bestEvents.push(event)
+                }
+            })
+        })
+
+        return bestEvents
+    }
 }
 
 module.exports = EventDAO

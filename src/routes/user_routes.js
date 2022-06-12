@@ -355,7 +355,6 @@ router.get('/:userID', authenticateUser, async (req, res, next) => {
  * HTTP Method: GET
  * Endpoint: "/users/{user_id}/statistics"
 */
-// TODO Endpoint: @GET "/users/{user_id}/statistics"
 router.get('/:userID/statistics', authenticateUser, async (req, res, next) => {
     // Get user ID from the URL path sent as parameter
     const { userID } = req.params
@@ -417,13 +416,10 @@ router.get('/:userID/statistics', authenticateUser, async (req, res, next) => {
             'number_of_comments': await userDAO.getUserNumberOfComments(userID),
             'percentage_commenters_below': await userDAO.getUserPercentageCommentersBelow(userID)
         }
-
-        console.log(statistics)
     } catch (error) {
         // Handle error on get user statistics from database
         stacktrace['sql_error'] = error
-        console.log(error)
-
+        
         return next(new ErrorAPI(
             'An error has occurred while fetching user statistics from the database',
             HttpStatusCodes.INTERNAL_SERVER_ERROR,
